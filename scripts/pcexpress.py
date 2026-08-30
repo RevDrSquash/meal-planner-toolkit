@@ -106,8 +106,10 @@ def gitignore_covers(text: str, pattern: str) -> bool:
     wanted_norm = {item.rstrip("/") for item in wanted}
     covered = False
     for raw in text.splitlines():
-        line = raw.split("#", 1)[0].strip()
-        if not line:
+        # Git comments are only whole lines that start with #. A trailing
+        # " # remark" is part of the pattern and does not ignore ".env".
+        line = raw.strip()
+        if not line or line.startswith("#"):
             continue
         negated = line.startswith("!")
         token = line[1:].strip() if negated else line

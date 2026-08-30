@@ -237,6 +237,11 @@ class EnvAndConfigTests(unittest.TestCase):
         self.assertTrue(gitignore_covers("/.pcexpress-mcp\n", ".pcexpress-mcp/"))
         self.assertFalse(gitignore_covers(".env\n", ".pcexpress-mcp/"))
         self.assertFalse(gitignore_covers("!.pcexpress-mcp/\n", ".pcexpress-mcp/"))
+        self.assertFalse(gitignore_covers(".env # never commit\n", ".env"))
+        self.assertFalse(
+            gitignore_covers(".pcexpress-mcp/ # tokens\n", ".pcexpress-mcp/")
+        )
+        self.assertTrue(gitignore_covers("# .env is below\n.env\n", ".env"))
 
     def test_missing_gitignore_detects_workspace_secrets(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -275,6 +280,24 @@ class EnvAndConfigTests(unittest.TestCase):
                 ensure_workspace_secret_gitignore(root, root / ".pcexpress-mcp"),
                 (),
             )
+
+    def test_inline_hash_remark_does_not_count_as_ignore(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw), vendor=True, env=None)
+            (root / ".gitignore").write_text(
+                ".env # never commit this\n.pcexpress-mcp/ # tokens\n",
+                encoding="utf-8",
+            )
+            missing = missing_workspace_gitignore_patterns(
+                root, root / ".pcexpress-mcp"
+            )
+            self.assertEqual(missing, (".env", ".pcexpress-mcp/"))
+            added = ensure_workspace_secret_gitignore(root, root / ".pcexpress-mcp")
+            self.assertEqual(added, (".env", ".pcexpress-mcp/"))
+            text = (root / ".gitignore").read_text(encoding="utf-8")
+            self.assertIn("\n.env\n", f"\n{text}")
+            self.assertTrue(gitignore_covers(text, ".env"))
+            self.assertTrue(gitignore_covers(text, ".pcexpress-mcp/"))
 
     def test_check_config_warns_when_workspace_gitignore_omits_secrets(self) -> None:
         env = {
