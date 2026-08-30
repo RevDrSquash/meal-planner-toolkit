@@ -8,6 +8,7 @@ venv/
 .env
 *.har
 .browser-profile/
+.pcexpress-mcp/
 
 # Generated example cards
 examples/workspace/recipes/*.html

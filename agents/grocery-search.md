@@ -23,6 +23,8 @@ You will be given:
 4. If nothing suitable is found, say so and suggest the closest substitute.
 
 Read-only tools only. Never add or remove cart items. Never edit files.
+If the provider tools are missing or return auth errors, fall back to
+workspace mappings — do not assume search works without login.
 
 ## If no provider tools are available
 

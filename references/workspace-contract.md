@@ -99,9 +99,13 @@ an accepted alias for the same file.
 
 ## Secrets (workspace only, gitignored)
 
-- `.env` — provider tokens and store/customer IDs
-- `.browser-profile/` — saved browser session for token refresh
-- `*.har` — captured network logs
+Add these to the **workspace-root** `.gitignore`. This toolkit's
+`.gitignore` does not apply to the parent repository — copy
+[templates/gitignore.example](../templates/gitignore.example).
+
+- `.env` — provider tokens and store IDs (never commit)
+- `.pcexpress-mcp/` — rotated PC Express refresh/access tokens
+- `*.har` — captured network logs (legacy; not used by current setup)
 
 The toolkit never stores these and never documents real values.
 

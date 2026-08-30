@@ -81,7 +81,7 @@ user says the change is lasting.
 ## 4. Hard rules
 
 - Treat this toolkit directory as read-only during normal use.
-- Never commit or paste `.env`, HAR files, or browser-profile cookies.
+- Never commit or paste `.env`, HAR files, or `.pcexpress-mcp/` token state.
 - Never place an order or attempt checkout. Cart fill is optional; payment
   stays with the user on the store site.
 - Do not assume PC Express, a specific banner, or any product IDs exist.

@@ -77,8 +77,9 @@ unless the user already named specific items.
 
 If they use a PC Express banner (Superstore, Loblaws, No Frills, Zehrs,
 Independent, T&T) **and** they asked for integration now, follow
-[pcexpress.md](pcexpress.md) after the files exist. Otherwise stop at a
-file-based shopping list.
+[pcexpress.md](pcexpress.md) after the files exist. That includes adding
+`templates/gitignore.example` entries to the workspace `.gitignore`.
+Otherwise stop at a file-based shopping list.
 
 Store/banner preference stays in `preferences.md`. Credentials stay in
 `.env` / MCP config, not in Markdown.

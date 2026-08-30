@@ -1,0 +1,8 @@
+# Private workspace secrets. Copy these entries into the workspace-root
+# `.gitignore`. This toolkit's `.gitignore` does not apply to the parent
+# repository, so omitting them can commit live tokens on `git add`.
+
+.env
+.pcexpress-mcp/
+*.har
+.browser-profile/
