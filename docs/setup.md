@@ -23,12 +23,20 @@ git clone --recurse-submodules <your-private-workspace>
 ## Onboarding
 
 Ask any agent in the workspace to run meal-planner onboarding, or follow
-`references/onboarding.md` yourself. Required result: `workspace.yaml`,
-`preferences.md`, and a `recipes/` directory.
+`references/onboarding.md` yourself.
 
 ```bash
+python .agents/skills/meal-planner-toolkit/scripts/workspace.py --init
+python .agents/skills/meal-planner-toolkit/scripts/workspace.py --check-initialized
 python .agents/skills/meal-planner-toolkit/scripts/workspace.py --check-onboarding
 ```
+
+`--init` creates the default layout (`preferences.md`, `staples.md`,
+`pantry.md`, `tools.md`, `recipes/`, `plans/`, `shopping/`) from templates
+and never overwrites existing user files. Empty `recipes/` and `plans/`
+get a starter `README.md` so Git records those directories. The interview then fills
+`preferences.md`. Re-running the entry skill does not repeat onboarding
+once preferences contain user answers.
 
 ## Recipe tools
 

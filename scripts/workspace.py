@@ -11,12 +11,17 @@ Discovery order, starting at cwd (or an explicit start path) and walking up:
 2. The conventional pair ``preferences.md`` + ``recipes/``.
 
 Optional ``WORKSPACE_ROOT`` overrides discovery.
+
+Use ``--init`` to create the default layout from templates. Existing user
+files are never overwritten.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
+import sys
 from pathlib import Path
 
 CONFIG_NAMES = ("workspace.yaml", "meal-planner.yaml")
@@ -25,21 +30,49 @@ DEFAULT_PATHS = {
     "preferences": "preferences.md",
     "staples": "staples.md",
     "pantry": "pantry.md",
+    "tools": "tools.md",
     "recipes": "recipes",
     "plans": "plans",
     "shopping": "shopping",
 }
 
+DIRECTORY_KEYS = frozenset({"recipes", "plans", "shopping"})
 REQUIRED_ONBOARDING = ("preferences", "recipes")
+
+# Template filename in templates/ → workspace path key, or a path relative to
+# the shopping directory for product mappings.
+FILE_TEMPLATES = {
+    "preferences": "preferences.md",
+    "staples": "staples.md",
+    "pantry": "pantry.md",
+    "tools": "tools.md",
+}
+
+# Starter README copied into otherwise-empty contract directories so Git
+# records them. shopping/ is tracked via product-mappings.md instead.
+DIRECTORY_README_TEMPLATES = {
+    "recipes": "recipes-readme.md",
+    "plans": "plans-readme.md",
+}
 
 
 class WorkspaceNotFoundError(FileNotFoundError):
     """Raised when no meal-planning workspace can be located."""
 
 
+class WorkspaceInitError(RuntimeError):
+    """Raised when workspace initialization is refused or cannot run."""
+
+
 def toolkit_root() -> Path:
     """Return this toolkit package root (the directory that contains SKILL.md)."""
     return Path(__file__).resolve().parent.parent
+
+
+def path_is_inside_toolkit(path: Path) -> bool:
+    """True when *path* is the toolkit root or a directory inside it."""
+    resolved = Path(path).expanduser().resolve()
+    return resolved.is_relative_to(toolkit_root())
 
 
 def _parse_simple_yaml(text: str) -> dict[str, str]:
@@ -113,20 +146,140 @@ def workspace_paths(root: Path | None = None) -> dict[str, Path]:
     return {key: (root / rel) for key, rel in relative.items()}
 
 
+def _normalize_markdown(text: str) -> str:
+    lines = text.replace("\r\n", "\n").split("\n")
+    return "\n".join(line.rstrip() for line in lines).strip()
+
+
+def preferences_need_interview(preferences_path: Path) -> bool:
+    """True when preferences.md is missing, empty, or still the stock template."""
+    if not preferences_path.is_file():
+        return True
+    user = _normalize_markdown(preferences_path.read_text(encoding="utf-8"))
+    if not user:
+        return True
+    template = toolkit_root() / "templates" / "preferences.md"
+    if template.is_file():
+        stock = _normalize_markdown(template.read_text(encoding="utf-8"))
+        if user == stock:
+            return True
+    return False
+
+
 def onboarding_complete(root: Path | None = None) -> bool:
-    """True when the minimum onboarding files/dirs exist."""
+    """True when the user has been interviewed (preferences are not stock).
+
+    Missing ``recipes/`` still counts as incomplete. A stock copy of
+    ``templates/preferences.md`` does not count as onboarded, so ``--init``
+    alone does not skip the interview.
+    """
     try:
         paths = workspace_paths(root)
     except WorkspaceNotFoundError:
         return False
-    for key in REQUIRED_ONBOARDING:
-        path = paths[key]
-        if key in {"recipes", "plans", "shopping"}:
+    if not paths["recipes"].is_dir():
+        return False
+    return not preferences_need_interview(paths["preferences"])
+
+
+def workspace_initialized(root: Path | None = None) -> bool:
+    """True when every contract path exists (files and directories)."""
+    try:
+        root = root or find_workspace_root()
+    except WorkspaceNotFoundError:
+        return False
+    if not any((root / name).is_file() for name in CONFIG_NAMES):
+        return False
+    paths = workspace_paths(root)
+    for key, path in paths.items():
+        if key in DIRECTORY_KEYS:
             if not path.is_dir():
                 return False
         elif not path.is_file():
             return False
-    return True
+    mappings = paths["shopping"] / "product-mappings.md"
+    return mappings.is_file()
+
+
+def _copy_if_missing(source: Path, dest: Path) -> str:
+    """Copy *source* to *dest* when the destination does not exist.
+
+    Returns ``created`` or ``exists``. Never overwrites an existing file.
+    """
+    if dest.exists():
+        return "exists"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, dest)
+    return "created"
+
+
+def init_workspace(root: Path, *, templates_dir: Path | None = None) -> dict[str, str]:
+    """Create missing default-layout files. Never overwrite existing user files.
+
+    Returns a mapping of logical name → ``created`` or ``exists``.
+    """
+    root = Path(root).expanduser().resolve()
+    if not root.is_dir():
+        raise WorkspaceInitError(f"Workspace root is not a directory: {root}")
+    if path_is_inside_toolkit(root):
+        raise WorkspaceInitError(
+            "Refusing to initialize a directory inside the toolkit package "
+            "as a private workspace. Run --init from the parent workspace, "
+            "or pass --root."
+        )
+
+    templates_dir = Path(templates_dir) if templates_dir else toolkit_root() / "templates"
+    actions: dict[str, str] = {}
+
+    config_exists = any((root / name).is_file() for name in CONFIG_NAMES)
+    default_config = templates_dir / "workspace.yaml"
+    if not config_exists:
+        actions["workspace.yaml"] = _copy_if_missing(default_config, root / "workspace.yaml")
+    else:
+        actions["workspace.yaml"] = "exists"
+
+    relative = load_workspace_config(root)
+
+    for key in DIRECTORY_KEYS:
+        path = root / relative[key]
+        if path.is_dir():
+            actions[key] = "exists"
+        elif path.exists():
+            actions[key] = "exists"
+        else:
+            path.mkdir(parents=True, exist_ok=True)
+            actions[key] = "created"
+
+    for key, template_name in FILE_TEMPLATES.items():
+        dest = root / relative[key]
+        actions[key] = _copy_if_missing(templates_dir / template_name, dest)
+
+    mappings = (root / relative["shopping"]) / "product-mappings.md"
+    actions["product-mappings"] = _copy_if_missing(
+        templates_dir / "product-mappings.md",
+        mappings,
+    )
+
+    for key, template_name in DIRECTORY_README_TEMPLATES.items():
+        dest = (root / relative[key]) / "README.md"
+        actions[f"{key}-readme"] = _copy_if_missing(
+            templates_dir / template_name,
+            dest,
+        )
+    return actions
+
+
+def resolve_init_root(explicit: Path | None = None) -> Path:
+    """Root to initialize: ``--root``, ``WORKSPACE_ROOT``, discovered, or cwd."""
+    if explicit is not None:
+        return Path(explicit).expanduser().resolve()
+    override = os.environ.get("WORKSPACE_ROOT")
+    if override:
+        return Path(override).expanduser().resolve()
+    try:
+        return find_workspace_root()
+    except WorkspaceNotFoundError:
+        return Path.cwd().resolve()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -135,14 +288,43 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--check-onboarding",
         action="store_true",
-        help="Exit 0 if onboarding is complete, 1 otherwise",
+        help="Exit 0 if the onboarding interview has been completed, 1 otherwise",
+    )
+    parser.add_argument(
+        "--check-initialized",
+        action="store_true",
+        help="Exit 0 if every contract path exists, 1 otherwise",
+    )
+    parser.add_argument(
+        "--init",
+        action="store_true",
+        help="Create missing workspace files from templates (never overwrites)",
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        help="Workspace root for --init (default: discovered root or cwd)",
     )
     args = parser.parse_args(argv)
+
+    if args.init:
+        try:
+            root = resolve_init_root(args.root)
+            actions = init_workspace(root)
+        except WorkspaceInitError as exc:
+            print(exc, file=sys.stderr)
+            return 1
+        for key, status in actions.items():
+            print(f"{key}\t{status}")
+        return 0
+
     try:
         root = find_workspace_root()
     except WorkspaceNotFoundError as exc:
-        print(exc, file=__import__("sys").stderr)
+        print(exc, file=sys.stderr)
         return 1
+    if args.check_initialized:
+        return 0 if workspace_initialized(root) else 1
     if args.check_onboarding:
         return 0 if onboarding_complete(root) else 1
     if args.paths:

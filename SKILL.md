@@ -24,6 +24,8 @@ Or run:
 ```bash
 python scripts/workspace.py
 python scripts/workspace.py --paths
+python scripts/workspace.py --init
+python scripts/workspace.py --check-initialized
 python scripts/workspace.py --check-onboarding
 ```
 
@@ -34,6 +36,7 @@ Default paths (overridable in `workspace.yaml`):
 | preferences | `preferences.md` |
 | staples | `staples.md` |
 | pantry | `pantry.md` |
+| tools | `tools.md` |
 | recipes | `recipes/` |
 | plans | `plans/` |
 | shopping | `shopping/` |
@@ -43,9 +46,18 @@ if discovery fails or paths look non-standard.
 
 ## 2. Onboard if needed
 
-Onboarding is incomplete when `preferences.md` is missing or `recipes/` does
-not exist. In that case follow [references/onboarding.md](references/onboarding.md)
-and [agents/onboard.md](agents/onboard.md) **before** planning or shopping.
+Onboarding is incomplete when `preferences.md` is missing, still the stock
+template, or `recipes/` does not exist. Check with
+`python scripts/workspace.py --check-onboarding`.
+
+If the layout is missing files, run `python scripts/workspace.py --init`
+(never overwrites existing user files), then follow
+[references/onboarding.md](references/onboarding.md) and
+[agents/onboard.md](agents/onboard.md) **before** planning or shopping.
+
+If onboarding is already complete, do **not** repeat the interview. If the
+layout is only partially present, run `--init` to add missing starter
+files and continue.
 
 Do not invent a household, store, or diet. Ask.
 
@@ -63,8 +75,8 @@ Do not invent a household, store, or diet. Ask.
 
 Write generated plans only under the workspace `plans/` path. Write learned
 product mappings only under the workspace `shopping/` path. Update
-`preferences.md`, `staples.md`, and `pantry.md` only when the user says the
-change is lasting.
+`preferences.md`, `staples.md`, `pantry.md`, and `tools.md` only when the
+user says the change is lasting.
 
 ## 4. Hard rules
 

@@ -19,9 +19,10 @@ Do not relocate user data into this package to make a host "see" files.
 
 ## What the workspace owns
 
-Preferences, staples, pantry, recipes, plans, shopping mappings, `.env`,
-browser profile, and MCP config. Updating this submodule must not overwrite
-those files.
+Preferences, staples, pantry, kitchen-tool notes, recipes, plans, shopping
+mappings, `.env`, browser profile, and MCP config. Updating this submodule
+must not overwrite those files. The default layout is in
+[references/workspace-contract.md](../references/workspace-contract.md).
 
 ## What this package owns
 
@@ -33,3 +34,7 @@ examples, and tests. Treat it as read-only during normal meal planning.
 Scripts and skills locate the workspace by walking up from the current
 working directory to `workspace.yaml` (or `preferences.md` + `recipes/`).
 They do not assume they live next to those files.
+
+```bash
+python scripts/workspace.py --init --root /path/to/private-workspace
+```

@@ -1,9 +1,11 @@
 # Meal Planner workspace contract. Paths are relative to this file.
+# User preferences stay in the Markdown files; this file only locates them.
 version: 2
 paths:
   preferences: preferences.md
   staples: staples.md
   pantry: pantry.md
+  tools: tools.md
   recipes: recipes
   plans: plans
   shopping: shopping

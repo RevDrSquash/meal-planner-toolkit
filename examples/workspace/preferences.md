@@ -5,20 +5,20 @@ Synthetic example household for docs and tests. Not a real user.
 ## Household
 
 - Number of people: 2
-- Dinners needed per week: 4
+- Location: example city
+- Meals to plan per cycle: 4 dinners
 
 ## Dietary
 
 - Restrictions/allergies: none
 - Dislikes: cilantro
-- Likes / cuisines to lean on: weeknight one-pot meals
-- Nutrition goals: none
+- Likes / preferences: weeknight one-pot meals
+- Nutrition or meal-planning goals: none
 
-## Constraints
+## Cooking
 
-- Weekly grocery budget: $120
-- Max repeat of the same protein per week: 2
-- Prefer items on sale when equivalent options exist: yes
+- Time or appliance constraints that affect planning: weeknight dinners under 45 minutes
+- Notable kitchen-tool exceptions: compact oven
 
 ## Store
 
