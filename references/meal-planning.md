@@ -8,7 +8,9 @@ Read workspace files only. This toolkit has no user preferences of its own.
 2. `staples.md` — recurring items to consider restocking
 3. `pantry.md` — assumed on-hand stock (exclude from to-buy)
 4. `tools.md` — equipment/capacity notes that affect recipe choice
-5. `recipes/` — candidate meals
+5. `recipes/` — candidate meals (canonical HTML cards; see
+   [docs/recipe-format.md](../docs/recipe-format.md)). Read the visible
+   sections or the embedded JSON-LD. Do not look for a Markdown sibling.
 6. `shopping/product-mappings.md` — known preferred products (hints only)
 
 If onboarding is incomplete, stop and follow [onboarding.md](onboarding.md).

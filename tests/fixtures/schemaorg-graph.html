@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture: @graph recipe</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {"@type": "WebSite", "name": "Example Kitchen"},
+      {
+        "@type": ["Recipe"],
+        "name": "Graph Wrapped Soup",
+        "recipeYield": 2,
+        "recipeIngredient": ["400 g canned tomatoes", "1 onion"],
+        "recipeInstructions": [
+          {"@type": "HowToSection", "name": "Cook", "itemListElement": [
+            {"@type": "HowToStep", "text": "Sweat the onion."},
+            {"@type": "HowToStep", "text": "Add tomatoes and simmer."}
+          ]}
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body></body>
+</html>

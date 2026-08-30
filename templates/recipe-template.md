@@ -1,14 +1,14 @@
 <!--
-Fill-in template for hand-entered recipes (family/cookbook recipes that
-aren't online). Copy this file, edit the values, then convert it to an HTML
-recipe card:
+Fill-in input for hand-entered recipes (family/cookbook recipes that
+aren't online). Copy this file, edit the values, then convert it to the
+canonical HTML card. Do not store this markdown in recipes/ next to the
+HTML unless the user wants a source archive.
 
     python scripts/recipe_from_markdown.py my-recipe.md
 
-The output goes to the workspace recipes/<filename>.html directory, in the
-same layout as recipes imported from a URL. Only the "# Name",
-"## Ingredients", and "## Instructions" sections are required; the rest
-are optional.
+The HTML card (templates/recipe-template.html / docs/recipe-format.md) is
+what planning reads. Only "# Name", "## Ingredients", and "## Instructions"
+are required. Optional "- Source:" stores provenance.
 
 The sample content below is a working example - replace it with your recipe.
 -->

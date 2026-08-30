@@ -1,0 +1,283 @@
+<!--
+Canonical recipe card (HTML). This is the format stored in the workspace
+recipes/ directory. Agents: copy this file to recipes/<slug>.html and
+replace the example values. Keep the section class names, the Nutrition
+table labels, and the JSON-LD Recipe block in sync with the visible card.
+
+Prefer the importers when you can:
+    python scripts/import_recipe.py <recipe-url>
+    python scripts/recipe_from_markdown.py my-recipe.md
+
+Do not keep a second Markdown copy next to this file unless the user asks
+for a source archive. Full spec: docs/recipe-format.md
+
+Required: h1 name, ingredients, instructions.
+Optional: meta (serves / time / tags), image, nutrition, notes, provenance.
+Nutrition is per serving. Mark inferred macros with class="estimate" and
+data-estimated="true", and list those labels on additionalProperty
+nutritionEstimatedLabels. Leave a macro out when you cannot source or
+responsibly estimate it.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weeknight Chili</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Weeknight Chili",
+  "recipeYield": "4",
+  "totalTime": "PT45M",
+  "recipeCategory": [
+    "beef",
+    "one-pot",
+    "freezer-friendly"
+  ],
+  "recipeIngredient": [
+    "500 g ground beef",
+    "1 onion, diced",
+    "2 cloves garlic",
+    "1 can (796 ml) diced tomatoes",
+    "1 can (540 ml) red kidney beans",
+    "2 tbsp chili powder",
+    "1 tsp cumin"
+  ],
+  "recipeInstructions": [
+    {
+      "@type": "HowToStep",
+      "text": "Brown the ground beef in a large pot over medium-high heat, then drain."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add onion and garlic; cook until softened, about 5 minutes."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Stir in chili powder and cumin and cook for 1 minute."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Add diced tomatoes and kidney beans. Simmer for 30 minutes, stirring occasionally."
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Season to taste and serve."
+    }
+  ],
+  "nutrition": {
+    "@type": "NutritionInformation",
+    "calories": "480 kcal",
+    "proteinContent": "32 g",
+    "fatContent": "22 g",
+    "carbohydrateContent": "34 g"
+  },
+  "isBasedOn": "hand-authored"
+}
+  </script>
+  <style>
+    :root {
+      --text: #242424;
+      --muted: #676767;
+      --border: #e8e8e8;
+      --accent: #067646;
+      --bg: #fafafa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+      background: #fff;
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.85rem;
+      line-height: 1.2;
+    }
+    .meta {
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+    .hero {
+      width: 100%;
+      max-height: 420px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 1.75rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ingredients ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+    .ingredients li {
+      margin-bottom: 0.35rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 500;
+      width: 55%;
+    }
+    .estimate {
+      color: var(--muted);
+      font-weight: 400;
+      font-size: 0.85em;
+    }
+    .nutrition-note {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+    }
+    .steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .step {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .step:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .step h3 {
+      margin: 0 0 0.5rem;
+      color: var(--accent);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .step-body ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+    .step-body li {
+      margin-bottom: 0.35rem;
+    }
+    .notes {
+      margin-top: 2rem;
+    }
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--accent); }
+    @media print {
+      body { background: #fff; }
+      .page { max-width: none; padding: 0; }
+      .step { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <article class="page">
+    <header>
+      <h1>Weeknight Chili</h1>
+      <!-- Serves · time · comma-separated tags. Omit any part you do not have. -->
+      <p class="meta">Serves 4 &middot; 45 min &middot; beef, one-pot, freezer-friendly</p>
+    </header>
+    <!-- Optional: <img class="hero" src="https://..." alt="Weeknight Chili"> -->
+    <div class="grid">
+      <section class="ingredients">
+        <h2>Ingredients</h2>
+        <ul>
+        <li>500 g ground beef</li>
+        <li>1 onion, diced</li>
+        <li>2 cloves garlic</li>
+        <li>1 can (796 ml) diced tomatoes</li>
+        <li>1 can (540 ml) red kidney beans</li>
+        <li>2 tbsp chili powder</li>
+        <li>1 tsp cumin</li>
+        </ul>
+      </section>
+      <section class="nutrition">
+        <h2>Nutrition</h2>
+        <p class="nutrition-basis">Per serving</p>
+        <table>
+          <tr><th scope="row">Calories</th><td>480 kcal</td></tr>
+          <tr><th scope="row">Protein</th><td>32 g</td></tr>
+          <tr><th scope="row">Fat</th><td>22 g</td></tr>
+          <tr><th scope="row">Carbohydrates</th><td>34 g</td></tr>
+          <!-- Example inferred row:
+          <tr data-estimated="true"><th scope="row">Calories</th>
+          <td>640 kcal <span class="estimate">(estimated)</span></td></tr> -->
+        </table>
+      </section>
+    </div>
+    <section class="instructions">
+      <h2>Instructions</h2>
+      <ol class="steps">
+      <li class="step">
+        <h3>Step 1</h3>
+        <div class="step-body">Brown the ground beef in a large pot over medium-high heat, then drain.</div>
+      </li>
+      <li class="step">
+        <h3>Step 2</h3>
+        <div class="step-body">Add onion and garlic; cook until softened, about 5 minutes.</div>
+      </li>
+      <li class="step">
+        <h3>Step 3</h3>
+        <div class="step-body">Stir in chili powder and cumin and cook for 1 minute.</div>
+      </li>
+      <li class="step">
+        <h3>Step 4</h3>
+        <div class="step-body">Add diced tomatoes and kidney beans. Simmer for 30 minutes, stirring occasionally.</div>
+      </li>
+      <li class="step">
+        <h3>Step 5</h3>
+        <div class="step-body">Season to taste and serve.</div>
+      </li>
+      </ol>
+    </section>
+    <section class="notes">
+      <h2>Notes</h2>
+      <div class="notes-body"><p>Pantry staples (spices, oil) usually don&#x27;t need to go on the shopping list.</p></div>
+    </section>
+    <footer>
+      <!-- Use Source + URL, Source file + filename, or both. -->
+      <p>Source file: hand-authored</p>
+      <p>Imported YYYY-MM-DD</p>
+    </footer>
+  </article>
+</body>
+</html>

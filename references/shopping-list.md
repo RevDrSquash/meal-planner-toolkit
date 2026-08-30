@@ -22,7 +22,7 @@ Derive the to-buy list from a confirmed (or draft) meal plan plus staples.
    [grocery-search.md](grocery-search.md). Otherwise leave product/price
    columns blank for the user.
 6. Include a nutrition summary only when the user asked or recipes already
-   have nutrition data. Use
+   have nutrition data on the HTML card (sourced or estimated). Use
    [templates/nutrition-summary.md](../templates/nutrition-summary.md).
 
 ## Learned mappings

@@ -40,12 +40,16 @@ once preferences contain user answers.
 
 ## Recipe tools
 
-Python 3.10+. Recipe import has no third-party dependencies.
+Python 3.10+. Recipe import has no third-party dependencies. Every input
+becomes one HTML card; see [recipe-format.md](recipe-format.md).
 
 ```bash
 python .agents/skills/meal-planner-toolkit/scripts/import_recipe.py <url>
 python .agents/skills/meal-planner-toolkit/scripts/recipe_from_markdown.py recipe.md
 ```
+
+Agents can also copy `templates/recipe-template.html` into the workspace
+`recipes/` directory and fill it in directly.
 
 ## Optional PC Express cart
 

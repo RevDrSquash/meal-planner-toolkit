@@ -12,7 +12,8 @@ tied to Claude Code, Cursor, or any other single host.
 
 - Orchestrator skill (`SKILL.md`)
 - Onboarding, planning, shopping, and grocery-search workflows
-- Recipe import / markdown conversion scripts
+- Recipe import (URL, markdown, HTML) into one canonical HTML card format
+  ([docs/recipe-format.md](docs/recipe-format.md))
 - Output templates (meal plan, cooking plan, shopping list, nutrition)
 - Grocery-provider contract and an optional PC Express adapter
 - Synthetic example workspace and tests (no personal data)

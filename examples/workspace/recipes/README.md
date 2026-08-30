@@ -1,5 +1,6 @@
 # Example recipes
 
-This directory is filled by tests (see `tests/test_recipe_from_markdown.py`)
-and may contain a generated HTML card for the synthetic weeknight chili
-fixture. It is not a real household collection.
+Synthetic only. Tests generate HTML cards from
+`tests/fixtures/` (weeknight chili and schema.org pages). This is not a
+real household collection. Canonical format:
+[docs/recipe-format.md](../../../docs/recipe-format.md).
