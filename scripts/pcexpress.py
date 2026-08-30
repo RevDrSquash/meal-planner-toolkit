@@ -97,24 +97,27 @@ def gitignore_covers(text: str, pattern: str) -> bool:
     This is a small exact-line matcher for the patterns we ship, not a
     full gitwildmatch implementation.
     """
-    wanted = {
-        pattern,
-        pattern.rstrip("/"),
-        pattern.rstrip("/") + "/",
-    }
-    wanted |= {f"/{item}" for item in list(wanted)}
-    wanted_norm = {item.rstrip("/") for item in wanted}
+    wanted_name = pattern.rstrip("/")
+    file_only = not pattern.endswith("/")
+    wanted = {wanted_name, f"/{wanted_name}"}
     covered = False
     for raw in text.splitlines():
         # Git comments are only whole lines that start with #. A trailing
         # " # remark" is part of the pattern and does not ignore ".env".
-        line = raw.strip()
+        # Leading spaces are part of the pattern; only trailing spaces
+        # are ignored. A trailing slash is directory-only and does not
+        # cover a file named ".env".
+        line = raw.rstrip()
         if not line or line.startswith("#"):
             continue
         negated = line.startswith("!")
-        token = line[1:].strip() if negated else line
-        if token.rstrip("/") in wanted_norm:
-            covered = not negated
+        token = line[1:] if negated else line
+        token_dir_only = token.endswith("/")
+        if token.rstrip("/") not in wanted:
+            continue
+        if file_only and token_dir_only:
+            continue
+        covered = not negated
     return covered
 
 
