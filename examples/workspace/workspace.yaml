@@ -1,0 +1,8 @@
+version: 2
+paths:
+  preferences: preferences.md
+  staples: staples.md
+  pantry: pantry.md
+  recipes: recipes
+  plans: plans
+  shopping: shopping

@@ -1,0 +1,79 @@
+---
+name: meal-planner-toolkit
+description: Plans meals from a private recipe collection, imports and normalizes recipes, builds shopping lists, and optionally resolves grocery products or fills a cart. Use when the user asks to plan meals, cook for the week, import a recipe, update pantry or staples, shop, or work with PC Express / Superstore.
+---
+
+# Meal Planner Toolkit
+
+This package is **read-only application code**. All user state lives in the
+**private workspace** that embeds this toolkit (usually as a Git submodule).
+Never write preferences, recipes, plans, product mappings, or credentials
+into this package.
+
+## 1. Locate the workspace
+
+Find the private workspace root before doing anything else:
+
+1. If `WORKSPACE_ROOT` is set, use it.
+2. Walk up from the current working directory looking for `workspace.yaml`
+   or `meal-planner.yaml`.
+3. Fall back to a directory that contains both `preferences.md` and `recipes/`.
+
+Or run:
+
+```bash
+python scripts/workspace.py
+python scripts/workspace.py --paths
+python scripts/workspace.py --check-onboarding
+```
+
+Default paths (overridable in `workspace.yaml`):
+
+| Key | Default |
+|---|---|
+| preferences | `preferences.md` |
+| staples | `staples.md` |
+| pantry | `pantry.md` |
+| recipes | `recipes/` |
+| plans | `plans/` |
+| shopping | `shopping/` |
+
+Read [references/workspace-contract.md](references/workspace-contract.md)
+if discovery fails or paths look non-standard.
+
+## 2. Onboard if needed
+
+Onboarding is incomplete when `preferences.md` is missing or `recipes/` does
+not exist. In that case follow [references/onboarding.md](references/onboarding.md)
+and [agents/onboard.md](agents/onboard.md) **before** planning or shopping.
+
+Do not invent a household, store, or diet. Ask.
+
+## 3. Route the request
+
+| User intent | Follow |
+|---|---|
+| First-time setup / missing workspace files | [references/onboarding.md](references/onboarding.md) |
+| Import or add a recipe | [references/recipe-import.md](references/recipe-import.md) |
+| Find a new recipe (no collection match) | [references/recipe-finder.md](references/recipe-finder.md) |
+| Plan meals / cooking for a period | [references/meal-planning.md](references/meal-planning.md) |
+| Build a shopping list from a plan | [references/shopping-list.md](references/shopping-list.md) |
+| Look up store products / prices | [references/grocery-search.md](references/grocery-search.md), [agents/grocery-search.md](agents/grocery-search.md) |
+| Provider setup or cart fill | [references/grocery-provider.md](references/grocery-provider.md) and the matching adapter (PC Express: [references/pcexpress.md](references/pcexpress.md)) |
+
+Write generated plans only under the workspace `plans/` path. Write learned
+product mappings only under the workspace `shopping/` path. Update
+`preferences.md`, `staples.md`, and `pantry.md` only when the user says the
+change is lasting.
+
+## 4. Hard rules
+
+- Treat this toolkit directory as read-only during normal use.
+- Never commit or paste `.env`, HAR files, or browser-profile cookies.
+- Never place an order or attempt checkout. Cart fill is optional; payment
+  stays with the user on the store site.
+- Do not assume PC Express, a specific banner, or any product IDs exist.
+  Read the workspace files. If a grocery provider is not configured, produce
+  a shopping list the user can take to any store.
+- Keep bulky product-search results out of the main thread: delegate to a
+  grocery-search subagent using [agents/grocery-search.md](agents/grocery-search.md).

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pcexpress": {
+      "command": "python",
+      "args": [
+        ".agents/skills/meal-planner-toolkit/scripts/run_server.py"
+      ]
+    }
+  }
+}

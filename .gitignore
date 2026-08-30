@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local scratch
+.env
+*.har
+.browser-profile/
+
+# Generated example cards
+examples/workspace/recipes/*.html
