@@ -30,5 +30,6 @@ A provider integration may expose some or all of:
 
 Provider secrets live in the workspace `.env` (gitignored). MCP config is
 workspace-local (Cursor, Claude Code, or any other client). This toolkit
-only ships scripts and examples — see `examples/mcp/` and
-[pcexpress.md](pcexpress.md).
+only ships a pin, a thin launcher, and examples — see `examples/mcp/`
+and [pcexpress.md](pcexpress.md). A provider may require authentication
+even for product search; do not assume an unauthenticated catalog.

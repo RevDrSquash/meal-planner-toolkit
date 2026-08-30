@@ -20,8 +20,8 @@ Do not relocate user data into this package to make a host "see" files.
 ## What the workspace owns
 
 Preferences, staples, pantry, recipes, plans, shopping mappings, `.env`,
-browser profile, and MCP config. Updating this submodule must not overwrite
-those files.
+PC Express token state (`.pcexpress-mcp/`), and MCP config. Updating this
+submodule must not overwrite those files.
 
 ## What this package owns
 

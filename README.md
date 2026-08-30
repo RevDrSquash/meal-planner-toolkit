@@ -20,7 +20,7 @@ tied to Claude Code, Cursor, or any other single host.
 ## What this repo does not contain
 
 - Anyone's `preferences.md`, recipes, plans, or product mappings
-- Store account IDs, tokens, or browser profiles
+- Store account IDs, tokens, or provider session state
 - A requirement to use a specific grocery chain
 
 ## Quick start (new private workspace)
@@ -44,7 +44,7 @@ if needed, then route to the matching file under `references/`.
 SKILL.md                 # orchestrator
 agents/                  # subagent instructions (host-neutral)
 references/              # workflows and contracts
-scripts/                 # import, workspace locator, optional PC Express
+scripts/                 # import, workspace locator, PC Express pin/launcher
 templates/               # empty/skeleton user files and plan formats
 examples/workspace/      # synthetic household for docs/tests
 tests/                   # synthetic fixtures only
@@ -59,4 +59,5 @@ python -m unittest discover -s tests -v
 ## License
 
 MIT. The optional PC Express MCP server is a separate project with its own
-license; vendor it in the private workspace if you use that adapter.
+license; vendor the reviewed commit in the private workspace if you use
+that adapter. See `references/pcexpress.md`.

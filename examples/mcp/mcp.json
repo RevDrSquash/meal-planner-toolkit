@@ -3,7 +3,8 @@
     "pcexpress": {
       "command": "python",
       "args": [
-        ".agents/skills/meal-planner-toolkit/scripts/run_server.py"
+        ".agents/skills/meal-planner-toolkit/scripts/pcexpress.py",
+        "--serve"
       ]
     }
   }

@@ -24,3 +24,4 @@ as a hint — not as a live price.
 
 Read [grocery-provider.md](grocery-provider.md). For PC Express banners,
 also read [pcexpress.md](pcexpress.md). Do not assume those tools exist.
+Do not assume product search works without provider authentication.
