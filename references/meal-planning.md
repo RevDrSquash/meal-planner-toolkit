@@ -4,18 +4,20 @@ Read workspace files only. This toolkit has no user preferences of its own.
 
 ## Inputs
 
-1. `preferences.md` — household, diet, budget, cadence, store notes
+1. `preferences.md` — household, diet, store, cooking constraints
 2. `staples.md` — recurring items to consider restocking
 3. `pantry.md` — assumed on-hand stock (exclude from to-buy)
-4. `recipes/` — candidate meals
-5. `shopping/product-mappings.md` — known preferred products (hints only)
+4. `tools.md` — equipment/capacity notes that affect recipe choice
+5. `recipes/` — candidate meals
+6. `shopping/product-mappings.md` — known preferred products (hints only)
 
 If onboarding is incomplete, stop and follow [onboarding.md](onboarding.md).
 
 ## Procedure
 
-1. Pick meals that fit preferences (servings, diet, protein-repeat limits,
-   leftover/overlap goals).
+1. Pick meals that fit preferences (servings, diet, leftover/overlap
+   goals) and `tools.md` constraints (for example skip oven recipes if
+   there is no oven).
 2. Note recipe modifications that reduce waste or avoid one-off specialty
    items, using pantry staples where reasonable. Ask before dropping
    something core to the dish.
@@ -47,6 +49,7 @@ For each flagged item:
 
 ## Lasting changes
 
-When the user says a staple or pantry item changed permanently, update
-`staples.md` or `pantry.md` in the same conversation. Do not rewrite those
-files just because one week's order skipped an item.
+When the user says a staple, pantry item, or kitchen-tool note changed
+permanently, update `staples.md`, `pantry.md`, or `tools.md` in the same
+conversation. Do not rewrite those files just because one week's order
+skipped an item.

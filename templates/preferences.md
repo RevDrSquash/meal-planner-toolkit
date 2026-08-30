@@ -1,24 +1,28 @@
 # Meal Planning Preferences
 
 Edit this file with your real preferences. The agent reads it before planning.
+Keep this short. The system learns more during normal use.
+
+Store/banner preference lives here. Credentials and runtime provider config
+do not — those stay in gitignored `.env` / local MCP configuration.
 
 ## Household
 
 - Number of people:
-- Dinners needed per week:
+- Location:
+- Meals to plan per cycle:  # optional; e.g. 5 dinners
 
 ## Dietary
 
 - Restrictions/allergies:
 - Dislikes:
-- Likes / cuisines to lean on:
-- Nutrition goals:
+- Likes / preferences:
+- Nutrition or meal-planning goals:
 
-## Constraints
+## Cooking
 
-- Weekly grocery budget:
-- Max repeat of the same protein per week:
-- Prefer items on sale when equivalent options exist:
+- Time or appliance constraints that affect planning:
+- Notable kitchen-tool exceptions:  # details also go in tools.md
 
 ## Store
 
