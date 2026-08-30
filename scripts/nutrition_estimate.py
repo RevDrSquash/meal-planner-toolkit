@@ -308,10 +308,11 @@ NUMBER_TOKEN = re.compile(
     r"|(?P<decimal>\d+(?:\.\d+)?)"
     r"|(?P<unicode>[½¼¾⅓⅔⅛])"
 )
+# Longer tokens first; \b so "l"/"g"/"can" do not eat "large"/"garlic"/"canned".
 UNIT_TOKEN = re.compile(
-    r"(kg|g|mg|lb|lbs|pounds?|oz|ounces?|ml|l|litres?|liters?|"
+    r"(kg|mg|g|lbs|pounds?|lb|ounces?|oz|ml|litres?|liters?|l|"
     r"cups?|tbsp|tablespoons?|tsp|teaspoons?|"
-    r"cans?|cloves?|bunch(?:es)?|slices?)",
+    r"cans?|cloves?|bunches|bunch|slices?)\b",
     re.IGNORECASE,
 )
 PAREN_QTY = re.compile(
@@ -416,6 +417,13 @@ def parse_ingredient(line: str) -> ParsedIngredient:
             paren_unit = qty.group(2).lower()
             paren_grams = paren_val * UNIT_GRAMS.get(paren_unit, 1.0)
         rest = rest[paren.end() :].strip()
+
+    # "2 (796 ml) cans ..." — unit can sit after the parenthetical size.
+    if unit is None:
+        unit_match = UNIT_TOKEN.match(rest)
+        if unit_match:
+            unit = unit_match.group(0).lower()
+            rest = rest[unit_match.end() :].strip()
 
     # Drop trailing prep after a comma: "onion, diced"
     food = rest.split(",")[0].strip()
@@ -525,10 +533,10 @@ def _to_grams(
     paren_grams: float | None,
 ) -> float | None:
     if paren_grams is not None:
-        # "1 can (796 ml) ..." — the parenthetical size is the useful mass.
+        # "1 can (796 ml) ..." or "2 (796 ml) cans ..." — size is the useful mass.
         if amount is None:
             return paren_grams
-        if unit and unit.startswith("can"):
+        if _is_can_unit(unit, food):
             return paren_grams * amount
         return paren_grams
 
@@ -540,7 +548,7 @@ def _to_grams(
             return amount * COUNT_GRAMS[food]
         return None
 
-    if unit.startswith("can"):
+    if _is_can_unit(unit, food):
         return amount * CAN_DEFAULT_GRAMS
     if unit.startswith("clove"):
         return amount * COUNT_GRAMS.get(food, CLOVE_GRAMS)
@@ -551,6 +559,13 @@ def _to_grams(
     if unit in UNIT_GRAMS:
         return amount * UNIT_GRAMS[unit]
     return None
+
+
+def _is_can_unit(unit: str | None, food: str) -> bool:
+    if unit and unit.startswith("can"):
+        return True
+    first = _lighten_food_name(food).split()[:1]
+    return first == ["can"] or first == ["cans"]
 
 
 def _looks_substantial(item: ParsedIngredient) -> bool:

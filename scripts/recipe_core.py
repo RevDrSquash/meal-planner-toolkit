@@ -438,7 +438,12 @@ def find_existing_recipe(recipes_dir: Path, recipe: dict) -> Path | None:
         return None
     intended = recipes_dir / recipe_filename(recipe)
     if intended.exists():
-        return intended
+        try:
+            identity = peek_recipe_identity(intended.read_text(encoding="utf-8"))
+        except OSError:
+            identity = {}
+        if is_same_recipe(identity, recipe):
+            return intended
     source_url = recipe.get("source_url")
     source_file = recipe.get("source_file")
     if not source_url and not source_file:

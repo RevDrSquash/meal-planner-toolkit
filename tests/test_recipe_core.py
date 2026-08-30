@@ -165,6 +165,16 @@ class DuplicateTests(unittest.TestCase):
             self.assertIn("Leftovers freeze well", path.read_text(encoding="utf-8"))
             self.assertEqual(len(list(out_dir.glob("*.html"))), 1)
 
+    def test_find_existing_ignores_different_card_on_slug(self) -> None:
+        recipe = _sample_recipe()
+        with tempfile.TemporaryDirectory() as raw:
+            out_dir = Path(raw)
+            (out_dir / "weeknight-chili.html").write_text(
+                "<html><h1>Unrelated Card</h1></html>",
+                encoding="utf-8",
+            )
+            self.assertIsNone(find_existing_recipe(out_dir, recipe))
+
     def test_collision_with_different_recipe_same_filename(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             out_dir = Path(raw)

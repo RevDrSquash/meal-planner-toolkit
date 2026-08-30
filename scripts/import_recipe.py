@@ -101,10 +101,8 @@ def ingest(source: str, recipes_dir: Path, force: bool) -> tuple[Path, bool]:
     page_html = fetch_page(normalized)
     recipe = recipe_from_jsonld(page_html, normalized)
     before = find_existing_recipe(recipes_dir, recipe)
-    if before is not None and not force:
-        return before, True
-    written = write_recipe(recipe, recipes_dir / recipe_filename(recipe), force)
-    return written, False
+    written = _commit(recipe, recipes_dir, force)
+    return written, bool(before) and not force
 
 
 def main(argv: list[str] | None = None) -> int:

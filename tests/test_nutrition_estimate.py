@@ -44,6 +44,29 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(parsed.food, "diced tomatoes")
         self.assertIsNotNone(parsed.macros)
 
+    def test_parse_can_count_after_parenthetical_size(self) -> None:
+        parsed = parse_ingredient("2 (796 ml) cans diced tomatoes")
+        self.assertAlmostEqual(parsed.grams or 0, 1592)
+        self.assertEqual(parsed.food, "diced tomatoes")
+        self.assertIsNotNone(parsed.macros)
+
+    def test_unit_token_does_not_match_food_prefixes(self) -> None:
+        onion = parse_ingredient("1 large onion, diced")
+        self.assertEqual(onion.grams, 150)
+        self.assertEqual(onion.food, "onion")
+
+        lemon = parse_ingredient("1 lemon")
+        self.assertEqual(lemon.grams, 60)
+        self.assertEqual(lemon.food, "lemon")
+
+        garlic = parse_ingredient("2 garlic cloves")
+        self.assertEqual(garlic.grams, 6)
+        self.assertEqual(garlic.food, "garlic")
+
+        green = parse_ingredient("1 green beans")
+        self.assertIsNone(green.grams)
+        self.assertEqual(green.food, "green beans")
+
     def test_parse_count_and_cloves(self) -> None:
         onion = parse_ingredient("1 onion, diced")
         self.assertEqual(onion.grams, 150)

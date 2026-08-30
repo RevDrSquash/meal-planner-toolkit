@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -13,6 +14,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from import_recipe import ingest  # noqa: E402
 from recipe_core import (  # noqa: E402
     RECIPE_TEMPLATE,
+    RecipeExistsError,
     enrich_nutrition,
     recipe_from_jsonld,
     write_recipe,
@@ -122,6 +124,48 @@ class JsonLdFixtureTests(unittest.TestCase):
         self.assertEqual(recipe["name"], "Weeknight Chili")
         self.assertEqual(recipe["source_file"], "hand-authored")
         self.assertGreaterEqual(len(recipe["ingredients"]), 5)
+
+    def test_url_ingest_collision_with_different_card(self) -> None:
+        page = (FIXTURES / "schemaorg-recipe.html").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as raw:
+            out_dir = Path(raw)
+            occupant = out_dir / "creamy-tomato-pasta.html"
+            occupant.write_text(
+                "<html><h1>Unrelated Card</h1></html>",
+                encoding="utf-8",
+            )
+            with patch("import_recipe.fetch_page", return_value=page):
+                with self.assertRaises(RecipeExistsError) as ctx:
+                    ingest(
+                        "https://example.test/creamy-tomato-pasta",
+                        out_dir,
+                        force=False,
+                    )
+            self.assertFalse(ctx.exception.same_recipe)
+            self.assertEqual(
+                occupant.read_text(encoding="utf-8"),
+                "<html><h1>Unrelated Card</h1></html>",
+            )
+
+    def test_url_ingest_same_recipe_is_noop(self) -> None:
+        page = (FIXTURES / "schemaorg-recipe.html").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as raw:
+            out_dir = Path(raw)
+            with patch("import_recipe.fetch_page", return_value=page):
+                path, already = ingest(
+                    "https://example.test/creamy-tomato-pasta",
+                    out_dir,
+                    force=False,
+                )
+                self.assertFalse(already)
+                again, already = ingest(
+                    "https://example.test/creamy-tomato-pasta",
+                    out_dir,
+                    force=False,
+                )
+            self.assertTrue(already)
+            self.assertEqual(again, path)
+            self.assertEqual(len(list(out_dir.glob("*.html"))), 1)
 
     def test_pdf_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
