@@ -37,8 +37,9 @@ These must exist in the workspace root after onboarding:
 5. `tools.md` — starter guidance from
    [templates/tools.md](../templates/tools.md); add only notable
    kitchen-tool exceptions the user mentioned
-6. `recipes/` directory (empty is fine)
-7. `plans/` directory
+6. `recipes/` directory with a starter `README.md` so Git records it
+   (empty of recipes is fine)
+7. `plans/` directory with a starter `README.md`
 8. `shopping/` directory, with header-only
    `shopping/product-mappings.md` from
    [templates/product-mappings.md](../templates/product-mappings.md)

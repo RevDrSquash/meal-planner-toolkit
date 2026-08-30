@@ -48,6 +48,13 @@ FILE_TEMPLATES = {
     "tools": "tools.md",
 }
 
+# Starter README copied into otherwise-empty contract directories so Git
+# records them. shopping/ is tracked via product-mappings.md instead.
+DIRECTORY_README_TEMPLATES = {
+    "recipes": "recipes-readme.md",
+    "plans": "plans-readme.md",
+}
+
 
 class WorkspaceNotFoundError(FileNotFoundError):
     """Raised when no meal-planning workspace can be located."""
@@ -60,6 +67,12 @@ class WorkspaceInitError(RuntimeError):
 def toolkit_root() -> Path:
     """Return this toolkit package root (the directory that contains SKILL.md)."""
     return Path(__file__).resolve().parent.parent
+
+
+def path_is_inside_toolkit(path: Path) -> bool:
+    """True when *path* is the toolkit root or a directory inside it."""
+    resolved = Path(path).expanduser().resolve()
+    return resolved.is_relative_to(toolkit_root())
 
 
 def _parse_simple_yaml(text: str) -> dict[str, str]:
@@ -208,10 +221,11 @@ def init_workspace(root: Path, *, templates_dir: Path | None = None) -> dict[str
     root = Path(root).expanduser().resolve()
     if not root.is_dir():
         raise WorkspaceInitError(f"Workspace root is not a directory: {root}")
-    if root == toolkit_root():
+    if path_is_inside_toolkit(root):
         raise WorkspaceInitError(
-            "Refusing to initialize the toolkit package as a private workspace. "
-            "Run --init from the parent workspace, or pass --root."
+            "Refusing to initialize a directory inside the toolkit package "
+            "as a private workspace. Run --init from the parent workspace, "
+            "or pass --root."
         )
 
     templates_dir = Path(templates_dir) if templates_dir else toolkit_root() / "templates"
@@ -245,6 +259,13 @@ def init_workspace(root: Path, *, templates_dir: Path | None = None) -> dict[str
         templates_dir / "product-mappings.md",
         mappings,
     )
+
+    for key, template_name in DIRECTORY_README_TEMPLATES.items():
+        dest = (root / relative[key]) / "README.md"
+        actions[f"{key}-readme"] = _copy_if_missing(
+            templates_dir / template_name,
+            dest,
+        )
     return actions
 
 

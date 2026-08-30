@@ -33,7 +33,8 @@ python .agents/skills/meal-planner-toolkit/scripts/workspace.py --check-onboardi
 
 `--init` creates the default layout (`preferences.md`, `staples.md`,
 `pantry.md`, `tools.md`, `recipes/`, `plans/`, `shopping/`) from templates
-and never overwrites existing user files. The interview then fills
+and never overwrites existing user files. Empty `recipes/` and `plans/`
+get a starter `README.md` so Git records those directories. The interview then fills
 `preferences.md`. Re-running the entry skill does not repeat onboarding
 once preferences contain user answers.
 

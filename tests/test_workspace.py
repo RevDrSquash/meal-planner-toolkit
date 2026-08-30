@@ -19,7 +19,9 @@ from workspace import (  # noqa: E402
     init_workspace,
     main,
     onboarding_complete,
+    path_is_inside_toolkit,
     preferences_need_interview,
+    resolve_init_root,
     toolkit_root,
     workspace_initialized,
     workspace_paths,
@@ -122,6 +124,8 @@ class InitWorkspaceTests(unittest.TestCase):
                 "plans",
                 "shopping",
                 "product-mappings",
+                "recipes-readme",
+                "plans-readme",
             }
             self.assertEqual(set(actions), expected_created)
             self.assertTrue(all(status == "created" for status in actions.values()))
@@ -135,6 +139,10 @@ class InitWorkspaceTests(unittest.TestCase):
             self.assertTrue((root / "plans").is_dir())
             self.assertTrue((root / "shopping").is_dir())
             self.assertTrue((root / "shopping" / "product-mappings.md").is_file())
+            self.assertTrue((root / "recipes" / "README.md").is_file())
+            self.assertTrue((root / "plans" / "README.md").is_file())
+            recipes_readme = (root / "recipes" / "README.md").read_text(encoding="utf-8")
+            self.assertIn("keeps the directory in Git", recipes_readme)
             tools = (root / "tools.md").read_text(encoding="utf-8")
             self.assertIn("Notable exceptions", tools)
 
@@ -162,6 +170,22 @@ class InitWorkspaceTests(unittest.TestCase):
             )
             self.assertTrue((root / "tools.md").is_file())
             self.assertTrue(onboarding_complete(root))
+            self.assertEqual(actions["recipes-readme"], "created")
+            self.assertTrue((root / "recipes" / "README.md").is_file())
+
+    def test_init_does_not_overwrite_existing_directory_readmes(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "recipes").mkdir()
+            (root / "recipes" / "README.md").write_text("# Keep my recipes\n", encoding="utf-8")
+            actions = init_workspace(root)
+            self.assertEqual(actions["recipes-readme"], "exists")
+            self.assertEqual(
+                (root / "recipes" / "README.md").read_text(encoding="utf-8"),
+                "# Keep my recipes\n",
+            )
+            self.assertEqual(actions["plans-readme"], "created")
+            self.assertTrue((root / "plans" / "README.md").is_file())
 
     def test_init_respects_custom_paths(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -174,11 +198,52 @@ class InitWorkspaceTests(unittest.TestCase):
             self.assertTrue((root / "kitchen-notes.md").is_file())
             self.assertFalse((root / "tools.md").exists())
             self.assertTrue((root / "meals").is_dir())
+            self.assertTrue((root / "meals" / "README.md").is_file())
             self.assertEqual(workspace_paths(root)["tools"], root / "kitchen-notes.md")
 
     def test_init_refuses_toolkit_root(self) -> None:
         with self.assertRaises(WorkspaceInitError):
             init_workspace(toolkit_root())
+
+    def test_init_refuses_toolkit_subdirectories(self) -> None:
+        for rel in ("scripts", "examples", "tests", "templates"):
+            with self.subTest(rel=rel):
+                self.assertTrue(path_is_inside_toolkit(toolkit_root() / rel))
+                with self.assertRaises(WorkspaceInitError):
+                    init_workspace(toolkit_root() / rel)
+
+    def test_path_is_inside_toolkit_excludes_sibling_dirs(self) -> None:
+        sibling = toolkit_root().parent / f"{toolkit_root().name}-not-toolkit"
+        self.assertFalse(path_is_inside_toolkit(sibling))
+        with tempfile.TemporaryDirectory() as raw:
+            self.assertFalse(path_is_inside_toolkit(Path(raw)))
+
+    def test_resolve_init_root_cwd_inside_toolkit_is_caught_by_init(self) -> None:
+        scripts_dir = toolkit_root() / "scripts"
+        env = {k: v for k, v in os.environ.items() if k != "WORKSPACE_ROOT"}
+        with patch.dict(os.environ, env, clear=True):
+            with patch(
+                "workspace.find_workspace_root",
+                side_effect=WorkspaceNotFoundError("missing"),
+            ):
+                with patch("workspace.Path.cwd", return_value=scripts_dir):
+                    root = resolve_init_root()
+        self.assertEqual(root, scripts_dir)
+        with self.assertRaises(WorkspaceInitError):
+            init_workspace(root)
+
+    def test_cli_init_refuses_cwd_inside_toolkit_when_undiscovered(self) -> None:
+        scripts_dir = toolkit_root() / "scripts"
+        env = {k: v for k, v in os.environ.items() if k != "WORKSPACE_ROOT"}
+        with patch.dict(os.environ, env, clear=True):
+            with patch(
+                "workspace.find_workspace_root",
+                side_effect=WorkspaceNotFoundError("missing"),
+            ):
+                with patch("workspace.Path.cwd", return_value=scripts_dir):
+                    self.assertEqual(main(["--init"]), 1)
+        self.assertFalse((scripts_dir / "workspace.yaml").exists())
+        self.assertFalse((scripts_dir / "preferences.md").exists())
 
     def test_cli_init_and_checks(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
