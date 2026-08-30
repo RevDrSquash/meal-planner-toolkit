@@ -81,8 +81,10 @@ an accepted alias for the same file.
   and accumulates details (unusual oven size, missing stovetop, specialty
   appliances). Not a full equipment inventory.
 - `recipes/` — the user's normalized recipe collection (HTML cards or
-  markdown). One file per recipe.
+  markdown). One file per recipe. `--init` writes a starter `README.md`
+  so Git records the directory before any recipes exist.
 - `plans/` — generated meal plans, cooking plans, shopping plans.
+  `--init` writes a starter `README.md` so Git records the directory.
 - `shopping/` — durable retailer/product knowledge. V2 keeps this minimal:
   `shopping/product-mappings.md` holds learned ingredient → preferred
   product, brand, and size. Generated cart or order records may appear
