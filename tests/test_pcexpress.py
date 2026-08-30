@@ -29,9 +29,15 @@ from pcexpress import (  # noqa: E402
     ConfigStatus,
     apply_serve_env,
     check_config,
+    ensure_workspace_secret_gitignore,
+    gitignore_covers,
+    ignore_pattern_for_state_dir,
     load_env_file,
     main,
+    missing_workspace_gitignore_patterns,
+    parse_cli,
     plan_serve,
+    serve,
     tool_side_effect,
     tools_declared_in_server_source,
 )
@@ -205,6 +211,87 @@ class EnvAndConfigTests(unittest.TestCase):
         self.assertEqual(main(["--pin"]), 0)
         self.assertEqual(main(["--tools"]), 0)
 
+    def test_cli_serve_forwards_flag_style_extras(self) -> None:
+        args, extra = parse_cli(["--serve", "--http"])
+        self.assertTrue(args.serve)
+        self.assertEqual(extra, ["--http"])
+        args, extra = parse_cli(["--serve", "--http", "--port", "8080"])
+        self.assertEqual(extra, ["--http", "--port", "8080"])
+        args, extra = parse_cli(["--serve", "--", "--http"])
+        self.assertEqual(extra, ["--http"])
+        with mock.patch("pcexpress.serve", return_value=0) as serve:
+            self.assertEqual(main(["--serve", "--http"]), 0)
+            serve.assert_called_once_with(["--http"])
+
+    def test_cli_non_serve_rejects_unknown_flags(self) -> None:
+        with self.assertRaises(SystemExit):
+            parse_cli(["--pin", "--http"])
+        with self.assertRaises(SystemExit):
+            parse_cli(["--check", "--http"])
+
+    def test_gitignore_covers_exact_and_slash_variants(self) -> None:
+        text = ".env\n.pcexpress-mcp/\n"
+        self.assertTrue(gitignore_covers(text, ".env"))
+        self.assertTrue(gitignore_covers(text, ".pcexpress-mcp/"))
+        self.assertTrue(gitignore_covers(text, ".pcexpress-mcp"))
+        self.assertTrue(gitignore_covers("/.pcexpress-mcp\n", ".pcexpress-mcp/"))
+        self.assertFalse(gitignore_covers(".env\n", ".pcexpress-mcp/"))
+        self.assertFalse(gitignore_covers("!.pcexpress-mcp/\n", ".pcexpress-mcp/"))
+
+    def test_missing_gitignore_detects_workspace_secrets(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw), vendor=True, env=None)
+            missing = missing_workspace_gitignore_patterns(
+                root, root / ".pcexpress-mcp"
+            )
+            self.assertIn(".env", missing)
+            self.assertIn(".pcexpress-mcp/", missing)
+            (root / ".gitignore").write_text(".env\n.pcexpress-mcp/\n", encoding="utf-8")
+            self.assertEqual(
+                missing_workspace_gitignore_patterns(root, root / ".pcexpress-mcp"),
+                (),
+            )
+
+    def test_state_dir_outside_workspace_is_not_a_gitignore_gap(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw) / "workspace"
+            outside = Path(raw) / "tokens"
+            root.mkdir()
+            self.assertIsNone(ignore_pattern_for_state_dir(root, outside))
+            missing = missing_workspace_gitignore_patterns(root, outside)
+            self.assertEqual(missing, (".env",))
+
+    def test_ensure_gitignore_appends_missing_secret_patterns(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw), vendor=True, env=None)
+            (root / ".gitignore").write_text("# keep me\n*.pyc\n", encoding="utf-8")
+            added = ensure_workspace_secret_gitignore(root, root / ".pcexpress-mcp")
+            self.assertEqual(added, (".env", ".pcexpress-mcp/"))
+            text = (root / ".gitignore").read_text(encoding="utf-8")
+            self.assertIn("# keep me", text)
+            self.assertIn(".env", text)
+            self.assertIn(".pcexpress-mcp/", text)
+            self.assertEqual(
+                ensure_workspace_secret_gitignore(root, root / ".pcexpress-mcp"),
+                (),
+            )
+
+    def test_check_config_warns_when_workspace_gitignore_omits_secrets(self) -> None:
+        env = {
+            "PCEXPRESS_REFRESH_TOKEN": "synthetic-refresh-token",
+            "PCEXPRESS_BANNER": "superstore",
+            "PCEXPRESS_STORE_ID": "0545",
+        }
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw), vendor=True, env=env)
+            status = check_config(root)
+            self.assertTrue(status.ok)
+            self.assertIn(".pcexpress-mcp/", status.missing_gitignore)
+            self.assertTrue(any("gitignore" in w.lower() for w in status.warnings))
+            (root / ".gitignore").write_text(".env\n.pcexpress-mcp/\n", encoding="utf-8")
+            status = check_config(root)
+            self.assertEqual(status.missing_gitignore, ())
+
 
 class ExampleAndTemplateTests(unittest.TestCase):
     def test_env_example_uses_refresh_token_not_bearer(self) -> None:
@@ -212,9 +299,22 @@ class ExampleAndTemplateTests(unittest.TestCase):
         for key in REQUIRED_ENV:
             self.assertIn(key, text)
         self.assertIn("PCEXPRESS_STATE_DIR", text)
+        self.assertIn("workspace", text.lower())
+        self.assertIn("gitignore.example", text)
         for key in OBSOLETE_ENV:
             self.assertNotIn(key, text)
         self.assertNotRegex(text, r"eyJ[A-Za-z0-9_-]{10,}")
+
+    def test_workspace_gitignore_template_covers_token_state(self) -> None:
+        text = (ROOT / "templates" / "gitignore.example").read_text(encoding="utf-8")
+        self.assertIn(".env", text)
+        self.assertIn(".pcexpress-mcp/", text)
+        self.assertIn("does not apply", text)
+        self.assertNotRegex(text, r"eyJ[A-Za-z0-9_-]{10,}")
+        docs = (ROOT / "references" / "pcexpress.md").read_text(encoding="utf-8")
+        self.assertIn("gitignore.example", docs)
+        self.assertIn("workspace-root", docs)
+        self.assertIn("--http", docs)
 
     def test_mcp_examples_launch_toolkit_serve(self) -> None:
         for name in ("mcp.json", "cursor.mcp.json"):
@@ -250,6 +350,31 @@ class ExampleAndTemplateTests(unittest.TestCase):
 
 
 class ServeFailureTests(unittest.TestCase):
+    def _workspace(self, root: Path, *, vendor: bool = True) -> Path:
+        (root / "workspace.yaml").write_text("version: 2\n", encoding="utf-8")
+        (root / "recipes").mkdir()
+        if vendor:
+            script = root / VENDOR_RELATIVE / SERVER_SCRIPT
+            script.parent.mkdir(parents=True)
+            script.write_text("# fake vendored server\n", encoding="utf-8")
+        return root
+
+    def test_serve_appends_gitignore_and_forwards_http(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            with mock.patch("pcexpress.find_workspace_root", return_value=root):
+                with mock.patch("pcexpress.os.execv") as execv:
+                    with mock.patch("pcexpress.os.chdir"):
+                        serve(["--http"])
+            gitignore = (root / ".gitignore").read_text(encoding="utf-8")
+            self.assertIn(".env", gitignore)
+            self.assertIn(".pcexpress-mcp/", gitignore)
+            execv.assert_called_once()
+            launched = execv.call_args[0][1]
+            self.assertEqual(launched[0], sys.executable)
+            self.assertEqual(launched[-1], "--http")
+            self.assertTrue(str(launched[1]).endswith(SERVER_SCRIPT))
+
     def test_serve_returns_error_without_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             env = os.environ.copy()

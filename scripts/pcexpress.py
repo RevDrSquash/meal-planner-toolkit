@@ -62,6 +62,9 @@ OBSOLETE_ENV = (
     "PCEXPRESS_BEARER_TOKEN",
     "PCEXPRESS_CUSTOMER_ID",
 )
+# Patterns a *workspace-root* .gitignore must include. The toolkit
+# .gitignore does not apply to the parent repository.
+REQUIRED_WORKSPACE_GITIGNORE = (".env",)
 
 BANNERS = (
     "superstore",
@@ -86,6 +89,93 @@ def server_script(workspace: Path) -> Path:
 
 def default_state_dir(workspace: Path) -> Path:
     return workspace / STATE_DIR_NAME
+
+
+def gitignore_covers(text: str, pattern: str) -> bool:
+    """True when *pattern* is an active (non-negated) gitignore entry.
+
+    This is a small exact-line matcher for the patterns we ship, not a
+    full gitwildmatch implementation.
+    """
+    wanted = {
+        pattern,
+        pattern.rstrip("/"),
+        pattern.rstrip("/") + "/",
+    }
+    wanted |= {f"/{item}" for item in list(wanted)}
+    wanted_norm = {item.rstrip("/") for item in wanted}
+    covered = False
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        negated = line.startswith("!")
+        token = line[1:].strip() if negated else line
+        if token.rstrip("/") in wanted_norm:
+            covered = not negated
+    return covered
+
+
+def ignore_pattern_for_state_dir(workspace: Path, state_dir: Path) -> str | None:
+    """Return a gitignore pattern for *state_dir* when it is inside *workspace*."""
+    workspace_res = workspace.expanduser().resolve()
+    candidate = state_dir.expanduser()
+    if not candidate.is_absolute():
+        candidate = workspace_res / candidate
+    try:
+        relative = candidate.resolve().relative_to(workspace_res)
+    except ValueError:
+        return None
+    if relative == Path("."):
+        return None
+    return relative.as_posix().rstrip("/") + "/"
+
+
+def required_workspace_gitignore_patterns(
+    workspace: Path, state_dir: Path
+) -> tuple[str, ...]:
+    patterns = list(REQUIRED_WORKSPACE_GITIGNORE)
+    state_pattern = ignore_pattern_for_state_dir(workspace, state_dir)
+    if state_pattern and state_pattern not in patterns:
+        patterns.append(state_pattern)
+    return tuple(patterns)
+
+
+def missing_workspace_gitignore_patterns(
+    workspace: Path, state_dir: Path
+) -> tuple[str, ...]:
+    gitignore = workspace / ".gitignore"
+    text = gitignore.read_text(encoding="utf-8") if gitignore.is_file() else ""
+    return tuple(
+        pattern
+        for pattern in required_workspace_gitignore_patterns(workspace, state_dir)
+        if not gitignore_covers(text, pattern)
+    )
+
+
+def ensure_workspace_secret_gitignore(
+    workspace: Path, state_dir: Path
+) -> tuple[str, ...]:
+    """Append missing secret ignore patterns to the workspace ``.gitignore``.
+
+    Returns the patterns that were added. Does not touch the toolkit tree.
+    """
+    missing = missing_workspace_gitignore_patterns(workspace, state_dir)
+    if not missing:
+        return ()
+    path = workspace / ".gitignore"
+    existing = path.read_text(encoding="utf-8") if path.is_file() else ""
+    if existing and not existing.endswith("\n"):
+        existing += "\n"
+    if existing:
+        existing += "\n"
+    block = (
+        "# Meal Planner secrets — do not commit credentials or token state\n"
+        + "\n".join(missing)
+        + "\n"
+    )
+    path.write_text(existing + block, encoding="utf-8")
+    return missing
 
 
 def tool_side_effect(name: str) -> str:
@@ -151,6 +241,7 @@ class ConfigStatus:
     env_path: Path | None
     missing_env: tuple[str, ...]
     obsolete_env: tuple[str, ...]
+    missing_gitignore: tuple[str, ...]
     state_dir: Path
     errors: tuple[str, ...]
     warnings: tuple[str, ...]
@@ -217,6 +308,16 @@ def check_config(workspace: Path | None = None) -> ConfigStatus:
             f"PCEXPRESS_STATE_DIR unset; --serve will use {state_dir}"
         )
 
+    missing_gitignore = missing_workspace_gitignore_patterns(root, state_dir)
+    if missing_gitignore:
+        warnings.append(
+            "Workspace .gitignore does not ignore "
+            + ", ".join(missing_gitignore)
+            + ". Copy templates/gitignore.example into the private "
+            "workspace (the toolkit .gitignore does not apply to the "
+            "parent repo). --serve will append missing entries."
+        )
+
     return ConfigStatus(
         workspace=root,
         vendor_ok=vendor_ok,
@@ -224,6 +325,7 @@ def check_config(workspace: Path | None = None) -> ConfigStatus:
         env_path=env_path if env_path.is_file() else None,
         missing_env=missing,
         obsolete_env=obsolete,
+        missing_gitignore=missing_gitignore,
         state_dir=state_dir,
         errors=tuple(errors),
         warnings=tuple(warnings),
@@ -283,6 +385,15 @@ def serve(extra_args: list[str] | None = None) -> int:
     except (WorkspaceNotFoundError, FileNotFoundError) as exc:
         print(exc, file=sys.stderr)
         return 1
+    try:
+        added = ensure_workspace_secret_gitignore(plan.workspace, plan.state_dir)
+        if added:
+            print(
+                "Added to workspace .gitignore: " + ", ".join(added),
+                file=sys.stderr,
+            )
+    except OSError as exc:
+        print(f"warning: could not update workspace .gitignore: {exc}", file=sys.stderr)
     apply_serve_env(plan)
     os.chdir(plan.workspace)
     os.execv(sys.executable, [sys.executable, str(plan.script), *plan.extra_args])
@@ -319,6 +430,8 @@ def _print_check() -> int:
         print("missing_env\t" + ",".join(status.missing_env))
     if status.obsolete_env:
         print("obsolete_env\t" + ",".join(status.obsolete_env))
+    if status.missing_gitignore:
+        print("missing_gitignore\t" + ",".join(status.missing_gitignore))
     for warning in status.warnings:
         print(f"warning\t{warning}", file=sys.stderr)
     for error in status.errors:
@@ -326,7 +439,13 @@ def _print_check() -> int:
     return 0 if status.ok else 1
 
 
-def main(argv: list[str] | None = None) -> int:
+def parse_cli(argv: list[str] | None = None) -> tuple[argparse.Namespace, list[str]]:
+    """Parse toolkit flags; leftover args after ``--serve`` are extras.
+
+    Flag-style extras such as ``--http`` must be forwarded to the vendored
+    server. ``parse_known_args`` is required because a ``nargs=*``
+    positional rejects option-looking tokens.
+    """
     parser = argparse.ArgumentParser(
         description="PC Express workspace pin, tool catalog, and vendored-server launch"
     )
@@ -349,21 +468,29 @@ def main(argv: list[str] | None = None) -> int:
     group.add_argument(
         "--serve",
         action="store_true",
-        help="Load workspace .env and exec the vendored MCP server",
+        help=(
+            "Load workspace .env and exec the vendored MCP server. "
+            "Additional arguments after --serve are forwarded "
+            "(example: --serve --http)"
+        ),
     )
-    parser.add_argument(
-        "serve_args",
-        nargs="*",
-        help="Extra args forwarded to the vendored server when using --serve",
-    )
-    args = parser.parse_args(argv)
+    args, extra = parser.parse_known_args(argv)
+    if extra and extra[0] == "--":
+        extra = extra[1:]
+    if extra and not args.serve:
+        parser.error("unrecognized arguments: " + " ".join(extra))
+    return args, extra
+
+
+def main(argv: list[str] | None = None) -> int:
+    args, extra = parse_cli(argv)
     if args.pin:
         return _print_pin()
     if args.tools:
         return _print_tools()
     if args.check:
         return _print_check()
-    return serve(list(args.serve_args))
+    return serve(extra)
 
 
 if __name__ == "__main__":

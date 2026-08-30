@@ -60,7 +60,14 @@ All of this happens in the **private workspace**, not in this toolkit.
    `.env`. Set `PCEXPRESS_BANNER` and `PCEXPRESS_STORE_ID`. Leave
    `PCEXPRESS_STATE_DIR` pointed at a workspace-local directory (the
    example uses `.pcexpress-mcp`) so the rotating refresh token stays
-   with the private workspace and is gitignored.
+   with the private workspace.
+
+   Add the entries from [templates/gitignore.example](../templates/gitignore.example)
+   to the **workspace-root** `.gitignore`. This toolkit's `.gitignore`
+   does not apply to the parent repo; without those entries a normal
+   `git add` can commit live OAuth token state. `scripts/pcexpress.py
+   --serve` appends any missing required entries (`.env` and the state
+   directory) before launching.
 
 4. One-time login, using upstream's wizard (browser required). From the
    vendor directory:
@@ -88,9 +95,10 @@ All of this happens in the **private workspace**, not in this toolkit.
    - Cursor: `examples/mcp/cursor.mcp.json` → workspace `.cursor/mcp.json`
    - Claude Code / generic: `examples/mcp/mcp.json` → workspace `.mcp.json`
 
-   You can also launch `vendor/pcexpress-mcp-server/pcexpress_mcp_server.py`
-   directly if the host starts with cwd at the workspace root and loads
-   `.env` itself.
+   Extra arguments after `--serve` are forwarded to the vendored server
+   (for example `--serve --http` for HTTP/SSE). You can also launch
+   `vendor/pcexpress-mcp-server/pcexpress_mcp_server.py` directly if the
+   host starts with cwd at the workspace root and loads `.env` itself.
 
 6. Confirm wiring (no network, no secrets printed):
 
@@ -161,7 +169,10 @@ not commit its output.
 
 ## Security
 
-- Never commit `.env`, `.pcexpress-mcp/`, `*.har`, or browser profiles
+- Never commit `.env`, `.pcexpress-mcp/`, `*.har`, or browser profiles.
+  Ignore them in the **workspace** `.gitignore` (copy
+  [templates/gitignore.example](../templates/gitignore.example)). This
+  package's `.gitignore` only covers the toolkit repository.
 - Re-review the vendored server diff before bumping the pin
 - The server can modify a cart; it cannot place orders or access payment
 - Do not fork upstream unless a concrete V2 requirement cannot be met

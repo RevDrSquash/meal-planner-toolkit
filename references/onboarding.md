@@ -39,7 +39,8 @@ Then fill `preferences.md` in their words.
 
 If they use a PC Express banner (Superstore, Loblaws, No Frills, Zehrs,
 Independent, T&T), follow [pcexpress.md](pcexpress.md) after the files
-exist. Otherwise stop at a file-based shopping list.
+exist. That includes adding `templates/gitignore.example` entries to the
+workspace `.gitignore`. Otherwise stop at a file-based shopping list.
 
 ## Done when
 

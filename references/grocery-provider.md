@@ -28,8 +28,11 @@ A provider integration may expose some or all of:
 
 ## Workspace wiring
 
-Provider secrets live in the workspace `.env` (gitignored). MCP config is
-workspace-local (Cursor, Claude Code, or any other client). This toolkit
-only ships a pin, a thin launcher, and examples — see `examples/mcp/`
-and [pcexpress.md](pcexpress.md). A provider may require authentication
+Provider secrets live in the workspace `.env`. Ignore `.env` and provider
+token-state directories in the **workspace** `.gitignore` (the toolkit
+`.gitignore` does not apply to the parent repo; see
+`templates/gitignore.example`). MCP config is workspace-local (Cursor,
+Claude Code, or any other client). This toolkit only ships a pin, a thin
+launcher, and examples — see `examples/mcp/` and
+[pcexpress.md](pcexpress.md). A provider may require authentication
 even for product search; do not assume an unauthenticated catalog.

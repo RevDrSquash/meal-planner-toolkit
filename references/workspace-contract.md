@@ -48,6 +48,10 @@ an accepted alias for the same file.
 
 ## Secrets (workspace only, gitignored)
 
+Add these to the **workspace-root** `.gitignore`. This toolkit's
+`.gitignore` does not apply to the parent repository — copy
+[templates/gitignore.example](../templates/gitignore.example).
+
 - `.env` — provider tokens and store IDs (never commit)
 - `.pcexpress-mcp/` — rotated PC Express refresh/access tokens
 - `*.har` — captured network logs (legacy; not used by current setup)

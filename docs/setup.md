@@ -43,7 +43,8 @@ python .agents/skills/meal-planner-toolkit/scripts/recipe_from_markdown.py recip
 
 See `references/pcexpress.md`. In short: vendor the reviewed
 `FireBall1725/pcexpress-mcp-server` commit in the workspace, copy
-`templates/env.example` to `.env`, run the **upstream** one-time login
+`templates/env.example` to `.env`, copy `templates/gitignore.example`
+into the workspace-root `.gitignore`, run the **upstream** one-time login
 (`python vendor/pcexpress-mcp-server/setup.py`), and point your agent
 host at `scripts/pcexpress.py --serve` using an example from
 `examples/mcp/`.
