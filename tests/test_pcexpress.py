@@ -237,6 +237,11 @@ class EnvAndConfigTests(unittest.TestCase):
         self.assertTrue(gitignore_covers("/.pcexpress-mcp\n", ".pcexpress-mcp/"))
         self.assertFalse(gitignore_covers(".env\n", ".pcexpress-mcp/"))
         self.assertFalse(gitignore_covers("!.pcexpress-mcp/\n", ".pcexpress-mcp/"))
+        self.assertTrue(gitignore_covers("# secrets\n.env\n", ".env"))
+        self.assertFalse(gitignore_covers(".env # local secrets\n", ".env"))
+        self.assertFalse(
+            gitignore_covers(".pcexpress-mcp/ # token state\n", ".pcexpress-mcp/")
+        )
 
     def test_missing_gitignore_detects_workspace_secrets(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
