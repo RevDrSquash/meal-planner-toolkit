@@ -19,7 +19,7 @@ tied to Claude Code, Cursor, or any other single host.
 
 ## What this repo does not contain
 
-- Anyone's `preferences.md`, recipes, plans, or product mappings
+- Anyone's `preferences.md`, recipes, plans, tools notes, or product mappings
 - Store account IDs, tokens, or browser profiles
 - A requirement to use a specific grocery chain
 
@@ -32,8 +32,15 @@ git submodule add https://github.com/RevDrSquash/meal-planner-toolkit.git \
   .agents/skills/meal-planner-toolkit
 ```
 
-Then ask an agent to run meal-planner onboarding, or copy files from
-`templates/` and `examples/workspace/`. Full steps: [docs/setup.md](docs/setup.md).
+Then ask an agent to run meal-planner onboarding, or bootstrap the default
+layout (never overwrites existing files):
+
+```bash
+python .agents/skills/meal-planner-toolkit/scripts/workspace.py --init
+```
+
+Full steps: [docs/setup.md](docs/setup.md). The default private-workspace
+layout is documented in [references/workspace-contract.md](references/workspace-contract.md).
 
 Entry point for any agent: read `SKILL.md`, locate the workspace, onboard
 if needed, then route to the matching file under `references/`.
@@ -44,7 +51,7 @@ if needed, then route to the matching file under `references/`.
 SKILL.md                 # orchestrator
 agents/                  # subagent instructions (host-neutral)
 references/              # workflows and contracts
-scripts/                 # import, workspace locator, optional PC Express
+scripts/                 # workspace locator/init, import, optional PC Express
 templates/               # empty/skeleton user files and plan formats
 examples/workspace/      # synthetic household for docs/tests
 tests/                   # synthetic fixtures only
