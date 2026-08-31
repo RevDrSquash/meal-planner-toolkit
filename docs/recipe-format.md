@@ -66,6 +66,8 @@ recipe (same name or same source URL/file) is already present. Use
 2. Read each card’s visible sections or its JSON-LD Recipe block. Both
    describe the same recipe.
 3. Ignore any leftover `.md` files; they are inputs, not the collection.
+4. Scale, adapt, and aggregate with `scripts/meal_plan.py` /
+   `scripts/ingredients.py`. Write one plan artifact under `plans/`.
 
-See [references/recipe-import.md](../references/recipe-import.md) for the
-agent workflow.
+See [references/meal-planning.md](../references/meal-planning.md) and
+[references/recipe-import.md](../references/recipe-import.md).

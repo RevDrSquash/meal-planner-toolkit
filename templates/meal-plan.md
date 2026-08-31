@@ -1,34 +1,55 @@
 # Meal Plan — YYYY-MM-DD
 
 - Household:
-- Meals this cycle:
-- Budget / estimated total:
+- Period:
+- Servings per meal:
 
-## Meals
+## Meal schedule
 
-1. **Recipe name** (protein / notes)
-2. 
-
-## Recipe modifications
-
-- 
-
-## Shopping list
-
-| Item | Product | Size | Price | Code |
+| Day | Meal | Recipe | Servings | Notes |
 |---|---|---|---|---|
 |  |  |  |  |  |
 
-**Estimated total:**
+## Cooking sessions
 
-## Pantry check
+### Day 1 — session title
 
-- item — quantity needed
+- Cook:
+- Why together:
+- Equipment / capacity:
+- Leftovers to hold:
+- Shared prep:
 
-## Excess flags
+## Recipe references
 
-- item — recipe needs X; smallest shoppable is Y; perishable waste | carries over; skip?
+- `recipes/slug.html` — source serves N, planned servings N
+
+## Recipe deviations
+
+- None.
+
+## Nutrition
+
+Per serving when the recipe card lists macros. Blank cells mean the card
+has no figure. Values marked estimated were inferred from ingredients.
+
+| Meal | Servings | Calories | Protein | Fat | Carbs |
+|---|---|---|---|---|---|
+|  |  |  |  |  |  |
+
+## Ingredient requirements
+
+Normalized amounts for the shopping-list step. These are ingredients, not
+retailer product IDs.
+
+| Ingredient | Quantity | Category | Used in |
+|---|---|---|---|
+|  |  |  |  |
+
+## Library notes
+
+-
 
 ## Notes
 
-- 
+-

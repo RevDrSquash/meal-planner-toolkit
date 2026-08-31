@@ -68,15 +68,18 @@ Do not invent a household, store, or diet. Ask.
 | First-time setup / missing workspace files | [references/onboarding.md](references/onboarding.md) |
 | Import or add a recipe | [references/recipe-import.md](references/recipe-import.md), [docs/recipe-format.md](docs/recipe-format.md) |
 | Find or discover recipes to add | [references/recipe-finder.md](references/recipe-finder.md), [agents/recipe-finder.md](agents/recipe-finder.md) |
-| Plan meals / cooking for a period | [references/meal-planning.md](references/meal-planning.md) |
+| Plan meals / cooking for a period | [references/meal-planning.md](references/meal-planning.md) (one artifact: schedule + cooking sessions) |
 | Build a shopping list from a plan | [references/shopping-list.md](references/shopping-list.md) |
 | Look up store products / prices | [references/grocery-search.md](references/grocery-search.md), [agents/grocery-search.md](agents/grocery-search.md) |
 | Provider setup or cart fill | [references/grocery-provider.md](references/grocery-provider.md) and the matching adapter (PC Express: [references/pcexpress.md](references/pcexpress.md)) |
 
-Write generated plans only under the workspace `plans/` path. Write learned
-product mappings only under the workspace `shopping/` path. Update
-`preferences.md`, `staples.md`, `pantry.md`, and `tools.md` only when the
-user says the change is lasting.
+Write generated plans only under the workspace `plans/` path. A V2 plan is
+one markdown file with the meal schedule, cooking sessions, deviations,
+nutrition, and normalized ingredient requirements (never product IDs).
+Helpers: `python scripts/meal_plan.py eligible`, `scale`, `aggregate`,
+and `render`. Write learned product mappings only under the workspace
+`shopping/` path. Update `preferences.md`, `staples.md`, `pantry.md`, and
+`tools.md` only when the user says the change is lasting.
 
 ## 4. Hard rules
 
