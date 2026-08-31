@@ -16,6 +16,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from provider import capabilities_from_tools
 from workspace import WorkspaceNotFoundError, find_workspace_root
 
 UPSTREAM_URL = "https://github.com/FireBall1725/pcexpress-mcp-server.git"
@@ -181,6 +182,11 @@ def ensure_workspace_secret_gitignore(
     )
     path.write_text(existing + block, encoding="utf-8")
     return missing
+
+
+def provider_capabilities():
+    """PC Express can search and write a cart; checkout is never granted."""
+    return capabilities_from_tools(ALL_TOOLS)
 
 
 def tool_side_effect(name: str) -> str:

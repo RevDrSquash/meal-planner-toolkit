@@ -65,7 +65,10 @@ and any PC Express / offer identifiers.
    until the user says they are actually out. Do not write product codes
    back onto the meal plan.
 5. Excess flags (shoppable size far larger than needed) belong after
-   product resolution, not in this intermediate list.
+   product resolution, not in this intermediate list. Review them on the
+   [proposed cart](cart.md) together with substitutions, unavailable
+   items, and optional skips. Do not write the remote cart until the
+   user approves that proposal.
 
 ## Pantry and staple rules
 

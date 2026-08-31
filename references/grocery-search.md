@@ -30,8 +30,10 @@ subagent or isolated turn. Pass:
 
 The searcher returns compact JSON (at most a few candidates per
 ingredient). The parent ranks and picks with
-`python scripts/product_resolve.py resolve … --candidates hits.json`.
-The searcher must not write the cart or mappings file.
+`python scripts/product_resolve.py resolve … --candidates hits.json`,
+then builds a proposed cart with [cart.md](cart.md). The searcher
+must not write the cart, mappings file, or approve mutations. Search
+remains useful when the provider has no cart-write capability.
 
 ## Without a provider
 

@@ -1,0 +1,198 @@
+{
+  "kind": "resolved-products",
+  "picks": [
+    {
+      "ingredient": "ground turkey",
+      "needed": "500 g",
+      "category": "proteins",
+      "source": "mapping-fallback-search",
+      "reason": "on-sale pack is a better unit price than the usual mapping",
+      "prices_live": true,
+      "mapping": {
+        "id": "EXAMPLE-TURKEY-500",
+        "brand": "Example Farm",
+        "name": "Ground Turkey",
+        "size": "500 g",
+        "price": 8.29,
+        "unit_price": 16.58,
+        "on_sale": false,
+        "available": true
+      },
+      "pick": {
+        "id": "EXAMPLE-TURKEY-SALE",
+        "brand": "Example Farm",
+        "name": "Ground Turkey",
+        "size": "500 g",
+        "price": 5.49,
+        "unit_price": 10.98,
+        "on_sale": true,
+        "available": true
+      },
+      "alternatives": []
+    },
+    {
+      "ingredient": "onion",
+      "needed": "2",
+      "category": "produce",
+      "source": "search",
+      "reason": "closest pack",
+      "prices_live": true,
+      "pick": {
+        "id": "EXAMPLE-ONION-3",
+        "brand": "Example Produce",
+        "name": "Yellow Onions",
+        "size": "3 count",
+        "price": 2.49,
+        "unit_price": 0.83,
+        "on_sale": false,
+        "available": true
+      },
+      "alternatives": []
+    },
+    {
+      "ingredient": "cilantro",
+      "needed": "for garnish",
+      "category": "produce",
+      "source": "search",
+      "reason": "no suitable product in the candidate set",
+      "prices_live": true,
+      "pick": null,
+      "alternatives": []
+    },
+    {
+      "ingredient": "sour cream",
+      "needed": "optional",
+      "category": "dairy",
+      "source": "search",
+      "reason": "available; optional topping",
+      "prices_live": true,
+      "pick": {
+        "id": "EXAMPLE-SOUR-250",
+        "brand": "Example Dairy",
+        "name": "Sour Cream",
+        "size": "250 ml",
+        "price": 2.29,
+        "unit_price": 0.92,
+        "on_sale": false,
+        "available": true
+      },
+      "alternatives": []
+    },
+    {
+      "ingredient": "soy sauce",
+      "needed": "2 tbsp",
+      "category": "pantry",
+      "source": "search",
+      "reason": "warehouse jug on sale",
+      "prices_live": true,
+      "mapping": {
+        "id": "EXAMPLE-SOY-500",
+        "brand": "Example Brand",
+        "name": "Soy Sauce",
+        "size": "500 ml",
+        "price": 3.49,
+        "unit_price": 0.70,
+        "available": true
+      },
+      "pick": {
+        "id": "EXAMPLE-SOY-1890",
+        "brand": "Warehouse Brand",
+        "name": "Soy Sauce",
+        "size": "1.89 L",
+        "price": 6.99,
+        "unit_price": 0.37,
+        "on_sale": true,
+        "available": true
+      },
+      "alternatives": [
+        {
+          "id": "EXAMPLE-SOY-500",
+          "brand": "Example Brand",
+          "name": "Soy Sauce",
+          "size": "500 ml",
+          "price": 3.49,
+          "unit_price": 0.70,
+          "available": true
+        }
+      ],
+      "excess": {
+        "severity": "substantial",
+        "needed_display": "2 tbsp",
+        "package_display": "1.89 L",
+        "packages": 1,
+        "ratio": 63.0,
+        "perishable": false,
+        "skip_ok": false,
+        "summary": "1 × 1.89 L for 2 tbsp (63× needed; extra pantry stock)"
+      }
+    },
+    {
+      "ingredient": "milk",
+      "needed": "1 cup",
+      "category": "dairy",
+      "source": "search",
+      "reason": "1 L is out of stock; 2 L is available",
+      "prices_live": true,
+      "pick": {
+        "id": "EXAMPLE-MILK-2L",
+        "brand": "Example Dairy",
+        "name": "2% Milk",
+        "size": "2 L",
+        "price": 4.99,
+        "unit_price": 2.50,
+        "on_sale": false,
+        "available": true
+      },
+      "alternatives": [
+        {
+          "id": "EXAMPLE-MILK-1L",
+          "brand": "Example Dairy",
+          "name": "2% Milk",
+          "size": "1 L",
+          "price": 3.29,
+          "available": false
+        }
+      ]
+    },
+    {
+      "ingredient": "bell pepper",
+      "needed": "2",
+      "category": "produce",
+      "source": "search",
+      "reason": "bell peppers unavailable",
+      "prices_live": true,
+      "pick": null,
+      "alternatives": [
+        {
+          "id": "EXAMPLE-ZUCCHINI-3",
+          "brand": "Example Produce",
+          "name": "Zucchini",
+          "size": "3 count",
+          "price": 2.99,
+          "unit_price": 1.00,
+          "on_sale": true,
+          "available": true
+        }
+      ]
+    },
+    {
+      "ingredient": "egg",
+      "needed": "1 dozen",
+      "category": "dairy",
+      "source": "mapping",
+      "reason": "learned staple mapping",
+      "prices_live": true,
+      "pick": {
+        "id": "EXAMPLE-EGG-12",
+        "brand": "Example Farm",
+        "name": "Large Eggs",
+        "size": "12 count",
+        "price": 4.19,
+        "unit_price": 0.35,
+        "on_sale": false,
+        "available": true
+      },
+      "alternatives": []
+    }
+  ]
+}

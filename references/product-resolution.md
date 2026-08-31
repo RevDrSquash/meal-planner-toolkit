@@ -5,7 +5,7 @@ product picks. This workflow is **read-only**: it does not add, remove, or
 edit cart items.
 
 Cart fill stays in the parent conversation after the user confirms the
-plan, pantry check, and excess flags. See
+plan, pantry check, excess flags, and the [proposed cart](cart.md). See
 [grocery-provider.md](grocery-provider.md).
 
 ## Durable shopping knowledge
@@ -87,9 +87,10 @@ python scripts/product_resolve.py remember --ingredient "soy sauce" \
    Substantial oversupply is never a silent add. For optional garnishes,
    offer to skip.
 
-6. Stop. Wait for confirmation before any cart mutation. After the user
-   confirms a product (or it is actually added to a cart), `remember`
-   that brand/size/id — not the raw search response.
+6. Stop. Build a [proposed cart](cart.md) from the picks and wait for
+   approval before any cart mutation. After the user confirms a product
+   (or it is actually added to a cart), `remember` that brand/size/id —
+   not the raw search response.
 
 ## Without a provider
 

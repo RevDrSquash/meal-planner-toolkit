@@ -127,8 +127,18 @@ only. They must never call `add_to_cart` or `remove_from_cart`.
 
 The parent uses past-order search for brand/size hints, then passes those
 hints to the scout and ranks picks with
-[product-resolution.md](product-resolution.md). Only the parent writes
-the cart after confirmation. Search and resolve never call cart tools.
+[product-resolution.md](product-resolution.md). Search and resolution
+do not require cart-write permission; a search-only tool set can still
+produce picks. Only the parent writes the cart, and only after the
+user approves the [proposed cart](cart.md). Search and resolve never
+call cart tools.
+
+```bash
+python .agents/skills/meal-planner-toolkit/scripts/cart.py capabilities --adapter pcexpress
+```
+
+That prints `cart_write=yes` and `checkout=no`. There is still no
+checkout tool.
 
 ## Product codes
 
@@ -168,6 +178,33 @@ python tools/smoke_api.py
 
 That is upstream's own authenticated smoke (profile, orders, cart). Do
 not commit its output.
+
+## Manual authenticated cart-mutation checklist
+
+Use a disposable test cart. Do not commit live product codes, cart
+contents, or account data.
+
+1. Confirm tools exist (`scripts/pcexpress.py --tools`) and capabilities
+   show search + cart_write, checkout absent
+   (`scripts/cart.py capabilities --adapter pcexpress`).
+2. Resolve 2–3 real products with `search_products` /
+   `get_product_details` only. Do not call `add_to_cart` yet.
+3. Write a small resolved-products JSON (synthetic shape, live ids) and
+   run `scripts/cart.py propose` against a shopping-list artifact.
+   Review substitutions, unavailable lines, excess, and optional skips
+   in the markdown. Confirm the remote cart is still unchanged.
+4. Approve specific lines (`scripts/cart.py approve --include …`).
+   `apply --dry-run` must list mutations and still must not write.
+5. For each approved mutation, call `add_to_cart` (parent only). Then
+   `view_cart` and reconcile quantities. If an add fails or a line is
+   missing, record a partial failure and stop — do not retry as checkout.
+6. `remove_from_cart` the test lines so the cart is restored.
+7. Confirm there is still no checkout or payment tool. Pay, if at all,
+   on the store site by hand.
+
+Automated tests cover proposal construction, the approval boundary, and
+mocked out-of-stock responses. This checklist is the only authenticated
+cart-mutation verification.
 
 ## Security
 

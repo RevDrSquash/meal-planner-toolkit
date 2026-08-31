@@ -31,7 +31,9 @@ parent said the household is out.
 4. Keep at most 3 candidates per ingredient (best fit, a sale/value
    option, and a smaller pack when the usual size looks wasteful).
 
-Read-only tools only. Never add or remove cart items. Never edit files.
+Read-only tools only. Never add or remove cart items. Never approve a
+proposed cart. Never edit files. Cart mutation stays in the parent
+after [references/cart.md](../references/cart.md).
 If the provider tools are missing or return auth errors, fall back to
 workspace mappings — do not assume search works without login.
 
