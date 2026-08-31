@@ -11,9 +11,10 @@ tied to Claude Code, Cursor, or any other single host.
 ## What this repo contains
 
 - Orchestrator skill (`SKILL.md`)
-- Onboarding, planning, shopping, and grocery-search workflows
+- Onboarding, planning, shopping, grocery-search, and recipe-discovery workflows
 - Recipe import (URL, markdown, HTML) into one canonical HTML card format
   ([docs/recipe-format.md](docs/recipe-format.md))
+- Lightweight recipe finder (filter/rank helpers; no search index)
 - Output templates (meal plan, cooking plan, shopping list, nutrition)
 - Grocery-provider contract and an optional PC Express adapter
 - Synthetic example workspace and tests (no personal data)
@@ -52,7 +53,7 @@ if needed, then route to the matching file under `references/`.
 SKILL.md                 # orchestrator
 agents/                  # subagent instructions (host-neutral)
 references/              # workflows and contracts
-scripts/                 # workspace locator/init, import, optional PC Express pin/launcher
+scripts/                 # workspace locator/init, import, recipe finder, optional PC Express
 templates/               # empty/skeleton user files and plan formats
 examples/workspace/      # synthetic household for docs/tests
 tests/                   # synthetic fixtures only

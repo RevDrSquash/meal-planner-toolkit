@@ -12,6 +12,10 @@ The fill-in HTML example is
 Scripts live in this toolkit. Output always goes to the **workspace**
 `recipes/` path (`scripts/workspace.py --paths`).
 
+To find candidates before importing, follow
+[recipe-finder.md](recipe-finder.md). Discovery only proposes URLs; this
+workflow is still the only write path.
+
 ## From a URL
 
 Works with sites that publish schema.org/Recipe JSON-LD (HelloFresh and

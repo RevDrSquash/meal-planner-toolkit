@@ -15,6 +15,14 @@ Read workspace files only. This toolkit has no user preferences of its own.
 
 If onboarding is incomplete, stop and follow [onboarding.md](onboarding.md).
 
+## Thin recipe collection
+
+If `recipes/` has fewer HTML cards than the household's meals-per-cycle
+(or fewer than 4 when that is unset), the library is too small for a
+useful plan. Check with `python scripts/recipe_finder.py --check-collection`,
+say so, and offer [recipe-finder.md](recipe-finder.md) before forcing a
+thin week. If the user wants to plan with what they have, continue.
+
 ## Procedure
 
 1. Pick meals that fit preferences (servings, diet, leftover/overlap

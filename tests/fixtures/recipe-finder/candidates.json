@@ -1,0 +1,65 @@
+[
+  {
+    "title": "Easy Weeknight Chili",
+    "url": "https://example.test/weeknight-chili?utm=finder",
+    "summary": "The same beef chili already in the collection.",
+    "tags": ["beef", "one-pot"],
+    "ingredients": ["ground beef", "beans", "tomato"],
+    "total_time": "45 min",
+    "serves": "4"
+  },
+  {
+    "title": "Weeknight Chili",
+    "url": "https://example.test/chili-copy",
+    "summary": "Near-duplicate title of the stored weeknight chili.",
+    "tags": ["beef"],
+    "ingredients": ["ground beef"],
+    "total_time": "40 min",
+    "serves": "4"
+  },
+  {
+    "title": "Creamy Peanut Noodles",
+    "url": "https://example.test/peanut-noodles",
+    "summary": "Quick noodles with peanut sauce and cilantro.",
+    "tags": ["noodles", "peanut"],
+    "ingredients": ["rice noodles", "peanut butter", "cilantro"],
+    "total_time": "20 min",
+    "serves": "2"
+  },
+  {
+    "title": "Vegetarian Lentil Chili",
+    "url": "https://example.test/lentil-chili",
+    "summary": "Hearty one-pot chili with brown lentils and beans.",
+    "tags": ["vegetarian", "one-pot", "chili"],
+    "ingredients": ["brown lentils", "kidney beans", "tomato"],
+    "total_time": "35 min",
+    "serves": "4"
+  },
+  {
+    "title": "Mushroom Tacos",
+    "url": "https://example.test/mushroom-tacos",
+    "summary": "Weeknight tacos with roasted mushrooms.",
+    "tags": ["vegetarian", "tacos"],
+    "ingredients": ["mushrooms", "tortillas", "lime"],
+    "total_time": "30 min",
+    "serves": "3"
+  },
+  {
+    "title": "Slow-Cooker Vegetable Stew",
+    "url": "https://example.test/vegetable-stew",
+    "summary": "All-day stew, not a weeknight one-pot.",
+    "tags": ["vegetarian", "stew"],
+    "ingredients": ["carrots", "potatoes", "celery"],
+    "total_time": "6 hrs",
+    "serves": "6"
+  },
+  {
+    "title": "Chicken Tikka Masala",
+    "url": "https://example.test/chicken-tikka",
+    "summary": "Classic chicken curry.",
+    "tags": ["chicken", "indian"],
+    "ingredients": ["chicken", "yogurt", "tomato"],
+    "total_time": "50 min",
+    "serves": "4"
+  }
+]
