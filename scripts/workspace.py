@@ -166,39 +166,80 @@ def preferences_need_interview(preferences_path: Path) -> bool:
     return False
 
 
-def onboarding_complete(root: Path | None = None) -> bool:
-    """True when the user has been interviewed (preferences are not stock).
+def onboarding_gaps(root: Path | None = None) -> list[str]:
+    """Reasons onboarding is incomplete; empty when it is complete.
 
-    Missing ``recipes/`` still counts as incomplete. A stock copy of
-    ``templates/preferences.md`` does not count as onboarded, so ``--init``
-    alone does not skip the interview.
+    Callers print these so an agent has something to act on. A bare exit
+    code is easy to skim past, which is how a workspace missing every
+    user file once reached meal planning.
     """
     try:
         paths = workspace_paths(root)
-    except WorkspaceNotFoundError:
-        return False
-    if not paths["recipes"].is_dir():
-        return False
-    return not preferences_need_interview(paths["preferences"])
+    except WorkspaceNotFoundError as exc:
+        return [str(exc)]
+
+    gaps: list[str] = []
+    recipes = paths["recipes"]
+    if not recipes.is_dir():
+        gaps.append(f"{recipes.name}/ directory is missing")
+
+    preferences = paths["preferences"]
+    if not preferences.is_file():
+        gaps.append(f"{preferences.name} is missing")
+    elif preferences_need_interview(preferences):
+        gaps.append(f"{preferences.name} is empty or still the stock template")
+
+    # staples.md and pantry.md gate on existence only. Their contents
+    # accumulate during normal use, but a deleted file means the household
+    # defaults were never confirmed, and the shopping list then bills the
+    # user for salt.
+    for key in ("staples", "pantry"):
+        path = paths[key]
+        if not path.is_file():
+            gaps.append(f"{path.name} is missing")
+
+    return gaps
 
 
-def workspace_initialized(root: Path | None = None) -> bool:
-    """True when every contract path exists (files and directories)."""
+def onboarding_complete(root: Path | None = None) -> bool:
+    """True when the user has been interviewed (preferences are not stock).
+
+    Missing ``recipes/``, ``staples.md``, or ``pantry.md`` counts as
+    incomplete. A stock copy of ``templates/preferences.md`` does not count
+    as onboarded, so ``--init`` alone does not skip the interview.
+    """
+    return not onboarding_gaps(root)
+
+
+def initialization_gaps(root: Path | None = None) -> list[str]:
+    """Contract paths that do not exist; empty when the layout is complete."""
     try:
         root = root or find_workspace_root()
-    except WorkspaceNotFoundError:
-        return False
+    except WorkspaceNotFoundError as exc:
+        return [str(exc)]
+
+    gaps: list[str] = []
     if not any((root / name).is_file() for name in CONFIG_NAMES):
-        return False
+        gaps.append("no " + " or ".join(CONFIG_NAMES))
+
     paths = workspace_paths(root)
     for key, path in paths.items():
         if key in DIRECTORY_KEYS:
             if not path.is_dir():
-                return False
+                gaps.append(f"{path.name}/ directory is missing")
         elif not path.is_file():
-            return False
+            gaps.append(f"{path.name} is missing")
+
     mappings = paths["shopping"] / "product-mappings.md"
-    return mappings.is_file()
+    if not mappings.is_file():
+        gaps.append(f"{paths['shopping'].name}/product-mappings.md is missing")
+
+    return gaps
+
+
+def workspace_initialized(root: Path | None = None) -> bool:
+    """True when every contract path exists (files and directories)."""
+    return not initialization_gaps(root)
 
 
 def _copy_if_missing(source: Path, dest: Path) -> str:
@@ -324,9 +365,32 @@ def main(argv: list[str] | None = None) -> int:
         print(exc, file=sys.stderr)
         return 1
     if args.check_initialized:
-        return 0 if workspace_initialized(root) else 1
+        gaps = initialization_gaps(root)
+        if not gaps:
+            print("workspace initialized")
+            return 0
+        print("workspace not initialized:", file=sys.stderr)
+        for gap in gaps:
+            print(f"  - {gap}", file=sys.stderr)
+        print(
+            "Run: python scripts/workspace.py --init --root .",
+            file=sys.stderr,
+        )
+        return 1
     if args.check_onboarding:
-        return 0 if onboarding_complete(root) else 1
+        gaps = onboarding_gaps(root)
+        if not gaps:
+            print("onboarding complete")
+            return 0
+        print("onboarding incomplete:", file=sys.stderr)
+        for gap in gaps:
+            print(f"  - {gap}", file=sys.stderr)
+        print(
+            "STOP. Follow references/onboarding.md before planning meals, "
+            "building a shopping list, or touching a cart.",
+            file=sys.stderr,
+        )
+        return 1
     if args.paths:
         for key, path in workspace_paths(root).items():
             print(f"{key}\t{path}")

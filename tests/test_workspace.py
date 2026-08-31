@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import io
 import os
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 from unittest.mock import patch
 
@@ -17,8 +19,10 @@ from workspace import (  # noqa: E402
     WorkspaceNotFoundError,
     find_workspace_root,
     init_workspace,
+    initialization_gaps,
     main,
     onboarding_complete,
+    onboarding_gaps,
     path_is_inside_toolkit,
     preferences_need_interview,
     resolve_init_root,
@@ -54,8 +58,18 @@ class WorkspaceDiscoveryTests(unittest.TestCase):
             (root / "recipes").mkdir()
             found = find_workspace_root(root)
             self.assertEqual(found, root)
-            self.assertTrue(onboarding_complete(root))
             self.assertFalse(workspace_initialized(root))
+            # Discovery succeeds, but preferences + recipes/ alone are no
+            # longer onboarding: staples.md and pantry.md must exist too,
+            # or the first shopping list bills the household for salt.
+            self.assertFalse(onboarding_complete(root))
+            self.assertEqual(
+                onboarding_gaps(root),
+                ["staples.md is missing", "pantry.md is missing"],
+            )
+            for name in ("staples.md", "pantry.md"):
+                (root / name).write_text(f"# {name}\n", encoding="utf-8")
+            self.assertTrue(onboarding_complete(root))
 
     def test_missing_workspace_raises(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -274,6 +288,127 @@ class InitWorkspaceTests(unittest.TestCase):
         with patch.dict(os.environ, {"WORKSPACE_ROOT": str(UNINITIALIZED_FIXTURE)}):
             self.assertEqual(main(["--check-initialized"]), 1)
             self.assertEqual(main(["--check-onboarding"]), 1)
+
+
+class OnboardingGapTests(unittest.TestCase):
+    """A gate the caller can act on, not a bare exit code."""
+
+    def _workspace(self, root: Path) -> Path:
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "workspace.yaml").write_text("version: 2\n", encoding="utf-8")
+        (root / "recipes").mkdir()
+        for name in ("preferences.md", "staples.md", "pantry.md"):
+            (root / name).write_text(f"# {name}\n\n- filled in\n", encoding="utf-8")
+        return root
+
+    def test_complete_workspace_has_no_gaps(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            self.assertEqual(onboarding_gaps(root), [])
+            self.assertTrue(onboarding_complete(root))
+
+    def test_missing_preferences_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            (root / "preferences.md").unlink()
+            self.assertIn("preferences.md is missing", onboarding_gaps(root))
+            self.assertFalse(onboarding_complete(root))
+
+    def test_stock_preferences_are_reported_distinctly(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            template = toolkit_root() / "templates" / "preferences.md"
+            (root / "preferences.md").write_text(
+                template.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            gaps = onboarding_gaps(root)
+            self.assertIn(
+                "preferences.md is empty or still the stock template", gaps
+            )
+
+    def test_staples_and_pantry_gate_on_existence(self) -> None:
+        """Deleting either re-triggers onboarding; this is the case that was missed."""
+        for name in ("staples.md", "pantry.md"):
+            with self.subTest(missing=name):
+                with tempfile.TemporaryDirectory() as raw:
+                    root = self._workspace(Path(raw))
+                    (root / name).unlink()
+                    self.assertIn(f"{name} is missing", onboarding_gaps(root))
+                    self.assertFalse(onboarding_complete(root))
+
+    def test_gaps_do_not_inspect_staples_contents(self) -> None:
+        """Existence only — contents accumulate during normal use."""
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            (root / "staples.md").write_text("", encoding="utf-8")
+            self.assertNotIn("staples.md is missing", onboarding_gaps(root))
+
+    def test_missing_recipes_directory_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            (root / "recipes").rmdir()
+            self.assertIn("recipes/ directory is missing", onboarding_gaps(root))
+
+    def test_initialization_gaps_name_each_missing_path(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            gaps = initialization_gaps(root)
+            self.assertIn("tools.md is missing", gaps)
+            self.assertIn("plans/ directory is missing", gaps)
+
+    def test_cli_check_onboarding_explains_and_says_stop(self) -> None:
+        """The silent exit code is what let a bad workspace reach meal planning."""
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            (root / "preferences.md").unlink()
+            (root / "staples.md").unlink()
+            err = io.StringIO()
+            with patch.dict(os.environ, {"WORKSPACE_ROOT": str(root)}):
+                with redirect_stderr(err):
+                    self.assertEqual(main(["--check-onboarding"]), 1)
+            text = err.getvalue()
+            self.assertIn("onboarding incomplete", text)
+            self.assertIn("preferences.md is missing", text)
+            self.assertIn("staples.md is missing", text)
+            self.assertIn("STOP", text)
+            self.assertIn("references/onboarding.md", text)
+
+    def test_cli_check_initialized_explains_and_suggests_init(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            err = io.StringIO()
+            with patch.dict(os.environ, {"WORKSPACE_ROOT": str(root)}):
+                with redirect_stderr(err):
+                    self.assertEqual(main(["--check-initialized"]), 1)
+            text = err.getvalue()
+            self.assertIn("workspace not initialized", text)
+            self.assertIn("tools.md is missing", text)
+            self.assertIn("--init", text)
+
+
+class TemplateDefaultTests(unittest.TestCase):
+    """Defaults ship populated so the first shopping list is not wrong."""
+
+    def test_pantry_template_ships_basics(self) -> None:
+        text = (toolkit_root() / "templates" / "pantry.md").read_text(
+            encoding="utf-8"
+        )
+        for item in ("Salt", "Black pepper", "Cooking oil"):
+            self.assertIn(item, text)
+
+    def test_staples_template_ships_some_defaults(self) -> None:
+        text = (toolkit_root() / "templates" / "staples.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Eggs", text)
+
+    def test_init_writes_populated_pantry(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            init_workspace(root)
+            text = (root / "pantry.md").read_text(encoding="utf-8")
+            self.assertIn("Salt", text)
+            self.assertIn("Cooking oil", text)
 
 
 if __name__ == "__main__":

@@ -46,9 +46,17 @@ if discovery fails or paths look non-standard.
 
 ## 2. Onboard if needed
 
-Onboarding is incomplete when `preferences.md` is missing, still the stock
-template, or `recipes/` does not exist. Check with
-`python scripts/workspace.py --check-onboarding`.
+Onboarding is incomplete when `preferences.md` is missing or still the
+stock template, or when `recipes/`, `staples.md`, or `pantry.md` do not
+exist. Check with `python scripts/workspace.py --check-onboarding`.
+
+**A non-zero exit blocks every other workflow in this skill.** It prints
+what is missing; act on that before doing anything else. Do not plan
+meals, build a shopping list, resolve products, or touch a cart while the
+check fails, even when the user asked for one of those directly. Say what
+is missing and onboard first — a plan built on absent preferences invents
+a household, and a shopping list built on an absent pantry bills the user
+for salt.
 
 If the layout is missing files, run `python scripts/workspace.py --init`
 (never overwrites existing user files), then follow
@@ -62,6 +70,9 @@ files and continue.
 Do not invent a household, store, or diet. Ask.
 
 ## 3. Route the request
+
+Run `python scripts/workspace.py --check-onboarding` before routing. If it
+exits non-zero, the only row below that applies is the first one.
 
 | User intent | Follow |
 |---|---|

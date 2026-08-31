@@ -30,13 +30,13 @@ These must exist in the workspace root after onboarding:
 1. `workspace.yaml` — copy [templates/workspace.yaml](../templates/workspace.yaml)
 2. `preferences.md` — filled from the interview, starting at
    [templates/preferences.md](../templates/preferences.md)
-3. `staples.md` — starter guidance from
-   [templates/staples.md](../templates/staples.md)
-4. `pantry.md` — starter guidance from
-   [templates/pantry.md](../templates/pantry.md)
-5. `tools.md` — starter guidance from
-   [templates/tools.md](../templates/tools.md); add only notable
-   kitchen-tool exceptions the user mentioned
+3. `staples.md` — [templates/staples.md](../templates/staples.md)
+   defaults, as edited in the confirmation step below
+4. `pantry.md` — [templates/pantry.md](../templates/pantry.md)
+   defaults, as edited in the confirmation step below
+5. `tools.md` — [templates/tools.md](../templates/tools.md); keep the
+   assumed baseline, strike anything the user does not have, and add only
+   notable exceptions or specialty appliances they mentioned
 6. `recipes/` directory with a starter `README.md` so Git records it
    (empty of recipes is fine)
 7. `plans/` directory with a starter `README.md`
@@ -66,12 +66,36 @@ Optional, only if they volunteer or it is needed to write the files:
 - meals to plan per cycle
 - whether they want optional grocery-provider integration now
 
-Do **not** front-load budget, a full staples list, a pantry inventory, or
-an appliance catalog. Those accumulate during normal use.
+Do **not** front-load budget or interview the user item-by-item through a
+pantry inventory or an appliance catalog. Present defaults instead — see
+the next section.
 
 Write answers primarily into `preferences.md`. Put durable equipment notes
-in `tools.md`. Leave `staples.md` and `pantry.md` as starter guidance
-unless the user already named specific items.
+in `tools.md`.
+
+## Confirm the defaults
+
+`pantry.md`, `staples.md`, and `tools.md` ship with sensible defaults
+rather than empty lists. Show them once, in one message, and ask a single
+question: anything to strike or add?
+
+This is one exchange, not an inventory. Do not walk the user through the
+list item by item, and do not ask again later — corrections arrive during
+normal planning.
+
+Sensible defaults serve the "keep onboarding short" goal better than empty
+files do. An empty `pantry.md` is not neutral: it makes the first shopping
+list bill the household for salt, pepper, and cooking oil, and the user
+only finds out at review time. One question up front is cheaper than that
+correction, and cheaper than letting the file accumulate over several
+weeks of wrong lists.
+
+Bias the two lists in opposite directions:
+
+- `pantry.md` suppresses buying. A wrong entry means a missing ingredient
+  at the stove, so strike anything the user is unsure about.
+- `staples.md` causes buying. A wrong entry costs a few dollars and is
+  visible on the list before checkout, so it can stay if they are unsure.
 
 ## Optional provider setup
 
