@@ -216,16 +216,20 @@ DIET_ALIASES = {
     "veggie": "vegetarian",
 }
 PLANT_DAIRY_PHRASES = (
+    "almond butter",
     "almond milk",
+    "cashew butter",
     "cashew milk",
     "coconut cream",
     "coconut milk",
     "hemp milk",
     "oat cream",
     "oat milk",
+    "peanut butter",
     "plant butter",
     "rice milk",
     "soy milk",
+    "sunflower butter",
     "vegan butter",
 )
 DAIRY_SCRUB_DIETS = frozenset({"dairy-free", "vegan"})
@@ -369,6 +373,18 @@ def words(text: str) -> set[str]:
     return {match.group(0).lower() for match in WORD.finditer(text)}
 
 
+def _conservative_prefix_match(token: str, needle: str) -> bool:
+    """Match plurals or non-negating hyphen compounds, not shared prefixes."""
+    longer, shorter = (token, needle) if len(token) >= len(needle) else (needle, token)
+    if shorter == longer or not longer.startswith(shorter):
+        return False
+    rest = longer[len(shorter):]
+    if rest in {"s", "es", "ed", "ing"}:
+        return True
+    # "chicken-stock" still counts as chicken; "gluten-free" does not count as gluten.
+    return rest.startswith("-") and rest[1:] not in {"free", "less"}
+
+
 def text_has_token(haystack: str, needle: str) -> bool:
     """True when *needle* appears as a word or conservative prefix match."""
     needle = needle.lower().strip()
@@ -382,7 +398,11 @@ def text_has_token(haystack: str, needle: str) -> bool:
         return True
     if len(needle) < 4:
         return False
-    return any(token.startswith(needle) or needle.startswith(token) for token in hay_words if len(token) >= 4)
+    return any(
+        _conservative_prefix_match(token, needle)
+        for token in hay_words
+        if len(token) >= 4
+    )
 
 
 def scrub_plant_dairy(text: str) -> str:

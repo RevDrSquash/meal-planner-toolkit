@@ -183,6 +183,55 @@ class RestrictionFilterTests(unittest.TestCase):
         )
         self.assertEqual(hits, [])
 
+    def test_diet_labels_and_lookalikes_are_not_restrictions(self) -> None:
+        gluten_free = parse_preferences("- Restrictions/allergies: gluten-free\n")
+        self.assertEqual(
+            restriction_hits(
+                {
+                    "title": "Gluten-Free Lentil Chili",
+                    "tags": ["gluten-free"],
+                    "ingredients": ["lentils", "beans"],
+                },
+                gluten_free,
+            ),
+            [],
+        )
+
+        vegan = parse_preferences("- Restrictions/allergies: vegan\n")
+        self.assertEqual(
+            restriction_hits(
+                {
+                    "title": "Creamy Meatless Chili",
+                    "tags": ["meatless", "vegan"],
+                    "ingredients": ["butternut squash", "beans"],
+                },
+                vegan,
+            ),
+            [],
+        )
+
+        vegetarian = parse_preferences("- Restrictions/allergies: vegetarian\n")
+        self.assertTrue(
+            any(
+                "chicken" in hit
+                for hit in restriction_hits(
+                    {"title": "Soup", "ingredients": ["chicken-stock"]},
+                    vegetarian,
+                )
+            )
+        )
+
+    def test_nut_butter_is_not_dairy(self) -> None:
+        prefs = parse_preferences("- Restrictions/allergies: vegan\n")
+        hits = restriction_hits(
+            {
+                "title": "Peanut Noodles",
+                "ingredients": ["peanut butter", "rice noodles"],
+            },
+            prefs,
+        )
+        self.assertEqual(hits, [])
+
     def test_request_diet_excludes_meat_even_without_pref(self) -> None:
         ranked = rank_candidates(
             [
