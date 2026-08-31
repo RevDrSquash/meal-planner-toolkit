@@ -283,7 +283,7 @@ def build_plan(
             or meal.get("reheat")
             or meal.get("cook") is False
         )
-        _factor, scale_note = serving_scale(recipe.get("serves"), planned)
+        _, scale_note = serving_scale(recipe.get("serves"), planned)
         if scale_note and not leftover:
             scale_notes.append(f"{recipe.get('name')}: {scale_note}")
 
