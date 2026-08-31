@@ -21,6 +21,7 @@ See docs/recipe-format.md.
 
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import re
@@ -378,13 +379,28 @@ def _safe_slug(text: str) -> str | None:
         return None
 
 
+def _name_fallback_slug(name: str) -> str:
+    digest = hashlib.sha1(name.encode("utf-8")).hexdigest()[:10]
+    return f"recipe-{digest}"
+
+
 def recipe_filename(recipe: dict) -> str:
-    """Stable, human-readable filename from the recipe name (URL slug as fallback)."""
+    """Stable, human-readable filename from the recipe name (URL slug as fallback).
+
+    When the title has no ASCII slug, do not reuse a shared scratch-file stem
+    or a generic ``recipe.html`` — those collide across different cards.
+    """
     name = (recipe.get("name") or "").strip()
     if name and name != "Untitled Recipe":
         slug = _safe_slug(name)
         if slug:
             return f"{slug}.html"
+        if recipe.get("source_url"):
+            try:
+                return f"{slug_from_url(str(recipe['source_url']))}.html"
+            except ValueError:
+                pass
+        return f"{_name_fallback_slug(name)}.html"
     if recipe.get("source_url"):
         try:
             return f"{slug_from_url(str(recipe['source_url']))}.html"

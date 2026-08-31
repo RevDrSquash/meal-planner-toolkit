@@ -78,22 +78,20 @@ class HelperTests(unittest.TestCase):
             ),
             "japanese-curry.html",
         )
-        self.assertEqual(
-            recipe_filename(
-                _sample_recipe(
-                    name="カレー",
-                    source_url=None,
-                    source_file="family-notebook.md",
-                )
-            ),
-            "family-notebook.html",
+        curry = recipe_filename(
+            _sample_recipe(name="カレー", source_url=None, source_file="scratch.md")
         )
-        self.assertEqual(
-            recipe_filename(
-                _sample_recipe(name="カレー", source_url=None, source_file=None)
-            ),
-            "recipe.html",
+        ramen = recipe_filename(
+            _sample_recipe(name="ラーメン", source_url=None, source_file="scratch.md")
         )
+        again = recipe_filename(
+            _sample_recipe(name="カレー", source_url=None, source_file=None)
+        )
+        self.assertTrue(curry.startswith("recipe-"))
+        self.assertTrue(curry.endswith(".html"))
+        self.assertNotEqual(curry, "scratch.html")
+        self.assertNotEqual(curry, ramen)
+        self.assertEqual(curry, again)
 
     def test_filename_prefers_human_readable_name(self) -> None:
         recipe = _sample_recipe(
