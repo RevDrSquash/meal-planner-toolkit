@@ -27,8 +27,9 @@ catalog. Do not treat those rows as retailer product IDs.
    [templates/shopping-list.md](../templates/shopping-list.md) (or update
    a shopping section). Do not put product codes back onto the meal plan.
 5. If a grocery provider is configured, resolve products and prices via
-   [grocery-search.md](grocery-search.md). Otherwise leave product/price
-   columns blank for the user.
+   [product-resolution.md](product-resolution.md) (search is delegated;
+   the cart is not written). Otherwise leave product/price columns blank
+   for the user.
 6. Include a nutrition summary only when the user asked. The meal plan
    already copies card macros when present; use
    [templates/nutrition-summary.md](../templates/nutrition-summary.md)
@@ -49,5 +50,7 @@ For each flagged item:
 ## Learned mappings
 
 When a product is confirmed in a cart or the user says "this is what I
-buy", append a line to `shopping/product-mappings.md`. Never invent a
-product code. Never put mappings in this toolkit repo.
+buy", persist it with `python scripts/product_resolve.py remember` (or
+append a line to `shopping/product-mappings.md`). Never invent a
+product code. Never put mappings in this toolkit repo. Do not store raw
+search results or cart snapshots; the shopping list lives with the plan.

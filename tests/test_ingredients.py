@@ -14,6 +14,7 @@ from ingredients import (  # noqa: E402
     aggregate_ingredients,
     apply_ingredient_replacement,
     categorize_ingredient,
+    convert_amount,
     display_quantity,
     format_amount,
     normalize_name,
@@ -138,6 +139,24 @@ class AggregationTests(unittest.TestCase):
         )
         tomatoes = [item for item in merged if "tomato" in item["name"]]
         self.assertEqual(len(tomatoes), 2)
+
+    def test_converts_compatible_volume_units(self) -> None:
+        merged = aggregate_ingredients(
+            [
+                "2 tbsp soy sauce",
+                "30 ml soy sauce",
+            ]
+        )
+        soy = [item for item in merged if item["name"] == "soy sauce"]
+        self.assertEqual(len(soy), 1)
+        self.assertAlmostEqual(soy[0]["amount"] or 0, 4.0, places=5)
+        self.assertEqual(soy[0]["unit"], "tbsp")
+
+    def test_convert_amount_mass_and_volume(self) -> None:
+        self.assertAlmostEqual(convert_amount(1, "lb", "g") or 0, 453.6)
+        self.assertAlmostEqual(convert_amount(2, "tbsp", "ml") or 0, 30.0)
+        self.assertAlmostEqual(convert_amount(1, "cup", "ml") or 0, 240.0)
+        self.assertIsNone(convert_amount(2, None, "g"))
 
     def test_converts_compatible_mass_units(self) -> None:
         merged = aggregate_ingredients(

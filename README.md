@@ -17,6 +17,8 @@ tied to Claude Code, Cursor, or any other single host.
 - Lightweight recipe finder (filter/rank helpers; no search index)
 - Structured meal + cooking plan helpers (serving scale, ingredient
   aggregation, plan render)
+- Grocery product resolution and learned mapping helpers (mocked
+  candidates only; no retailer calls)
 - Output templates (meal plan, cooking plan, shopping list, nutrition)
 - Grocery-provider contract and an optional PC Express adapter
 - Synthetic example workspace and tests (no personal data)
@@ -55,7 +57,7 @@ if needed, then route to the matching file under `references/`.
 SKILL.md                 # orchestrator
 agents/                  # subagent instructions (host-neutral)
 references/              # workflows and contracts
-scripts/                 # workspace locator/init, import, recipe finder, meal plan, optional PC Express
+scripts/                 # workspace locator/init, import, recipe finder, meal plan, product resolve, optional PC Express
 templates/               # empty/skeleton user files and plan formats
 examples/workspace/      # synthetic household for docs/tests
 tests/                   # synthetic fixtures only

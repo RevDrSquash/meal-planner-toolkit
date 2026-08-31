@@ -22,7 +22,8 @@ aggregation, eligibility, and the plan artifact.
    [docs/recipe-format.md](../docs/recipe-format.md)). Read the visible
    sections or the embedded JSON-LD. Do not look for a Markdown sibling.
 7. `shopping/product-mappings.md` — known preferred products (hints only;
-   not plan output)
+   not plan output). See [product-resolution.md](product-resolution.md)
+   after the shopping list exists.
 
 If onboarding is incomplete, stop and follow [onboarding.md](onboarding.md).
 
