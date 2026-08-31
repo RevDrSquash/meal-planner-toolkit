@@ -210,14 +210,8 @@ def build_shopping_list(
 
     requirements = _collect_requirements(plan, meals)
     deviations = list(plan.get("deviations") or [])
-    omitted = _omit_names(deviations)
-    requirements = [
-        item
-        for item in requirements
-        if not any(names_match(item.get("name") or "", name) for name in omitted)
-    ]
-
     items = [_requirement_to_item(item, deviations) for item in requirements]
+    items = [item for item in items if not _omitted_from_plan(item, deviations)]
     items = _merge_same_name(items)
 
     for item in items:
@@ -377,10 +371,11 @@ def load_plan(path: Path) -> dict:
 def _collect_requirements(plan: dict, meals: list[dict] | None) -> list[dict]:
     if meals:
         return requirements_from_meals(meals)
+    deviations = list(plan.get("deviations") or [])
     raw = plan.get("requirements")
     if raw:
         if all(isinstance(item, dict) and item.get("line") for item in raw):
-            return aggregate_ingredients(raw)
+            return aggregate_ingredients(_drop_omitted_lines(raw, deviations))
         return [dict(item) for item in raw]
     ingredients = plan.get("ingredients") or []
     if ingredients and all(
@@ -388,7 +383,7 @@ def _collect_requirements(plan: dict, meals: list[dict] | None) -> list[dict]:
         and not item.get("name")
         for item in ingredients
     ):
-        return aggregate_ingredients(ingredients)
+        return aggregate_ingredients(_drop_omitted_lines(ingredients, deviations))
     return [dict(item) for item in ingredients]
 
 
@@ -550,7 +545,7 @@ def _shopping_convert(
 ) -> tuple[float, str] | None:
     if amount is None:
         return None
-    if from_size and to_size and from_size != to_size:
+    if from_size != to_size:
         return None
     if from_unit == to_unit:
         return float(amount), QTY_EXACT
@@ -613,16 +608,17 @@ def _add_staple(
     qty = parse_ingredient_qty(
         f"{hint} {staple['label']}" if hint else staple["label"]
     )
+    parsed = bool(hint and qty.name == staple["name"])
     display = hint or "as needed"
-    if hint and qty.amount is not None and qty.name:
+    if parsed and qty.amount is not None:
         display = display_quantity(qty)
     item = {
         "name": staple["name"],
-        "amount": qty.amount if hint and qty.name == staple["name"] else None,
-        "unit": qty.unit if hint and qty.name == staple["name"] else None,
+        "amount": qty.amount if parsed else None,
+        "unit": qty.unit if parsed else None,
         "unit_size": None,
         "display": display,
-        "quantity_status": QTY_EXACT if qty.amount is not None and hint else QTY_UNCERTAIN,
+        "quantity_status": QTY_EXACT if parsed and qty.amount is not None else QTY_UNCERTAIN,
         "role": ROLE_ESSENTIAL,
         "category": _staple_category(staple),
         "sources": [],
@@ -705,6 +701,27 @@ def _replacements(deviations) -> dict[str, str]:
     return mapping
 
 
+def _drop_omitted_lines(
+    entries: Iterable[dict], deviations: list[dict]
+) -> list[dict]:
+    """Drop a contribution when a recipe-scoped omit applies to its source."""
+    kept: list[dict] = []
+    for entry in entries:
+        line = str(entry.get("line") or entry.get("original") or "")
+        source = entry.get("source") or entry.get("used_in")
+        if isinstance(source, list):
+            source = source[0] if len(source) == 1 else None
+        scoped = [
+            deviation
+            for deviation in deviations
+            if not deviation.get("recipe") or _same_recipe(deviation.get("recipe"), source)
+        ]
+        if line and _is_omitted(line, scoped):
+            continue
+        kept.append(entry)
+    return kept
+
+
 def _omit_names(deviations: Iterable[dict]) -> list[str]:
     names: list[str] = []
     for deviation in deviations:
@@ -721,14 +738,47 @@ def _omit_names(deviations: Iterable[dict]) -> list[str]:
     return names
 
 
+def _same_recipe(left, right) -> bool:
+    if not left or not right:
+        return False
+    return str(left).strip().lower() == str(right).strip().lower()
+
+
+def _omitted_from_plan(item: dict, deviations: list[dict]) -> bool:
+    """True when every source of this row is covered by a matching omit."""
+    name = item.get("name") or ""
+    sources = [source for source in (item.get("sources") or []) if source]
+    matched_recipes: list[str | None] = []
+    for deviation in deviations:
+        names = _omit_names([deviation])
+        if not any(names_match(name, omit) for omit in names):
+            continue
+        matched_recipes.append(deviation.get("recipe") or None)
+    if not matched_recipes:
+        return False
+    if any(recipe is None for recipe in matched_recipes):
+        return True
+    if not sources:
+        return False
+    return all(
+        any(_same_recipe(source, recipe) for recipe in matched_recipes)
+        for source in sources
+    )
+
+
 def _is_omitted(line: str, deviations: Iterable[dict]) -> bool:
     qty = parse_ingredient_qty(line)
-    for name in _omit_names(deviations):
-        if qty.name and names_match(qty.name, name):
-            return True
-        if name.lower() in line.lower():
-            return True
-    return False
+    food = qty.name or line
+    food = re.sub(
+        r"\b(?:for garnish|for serving|to taste|as needed|optional)\b",
+        "",
+        food,
+        flags=re.IGNORECASE,
+    )
+    food = re.sub(r"[\s,]+", " ", food).strip(" ,")
+    if not food:
+        return False
+    return any(names_match(food, name) for name in _omit_names(deviations))
 
 
 def _unpack_line(raw) -> tuple[str, str | None]:
