@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture: malformed structured data</title>
+  <script type="application/ld+json">
+  { this is not json
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Not A Recipe"
+  }
+  </script>
+</head>
+<body>
+  <h1>Looks like a recipe but has no Recipe JSON-LD</h1>
+</body>
+</html>

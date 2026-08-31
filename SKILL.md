@@ -66,7 +66,7 @@ Do not invent a household, store, or diet. Ask.
 | User intent | Follow |
 |---|---|
 | First-time setup / missing workspace files | [references/onboarding.md](references/onboarding.md) |
-| Import or add a recipe | [references/recipe-import.md](references/recipe-import.md) |
+| Import or add a recipe | [references/recipe-import.md](references/recipe-import.md), [docs/recipe-format.md](docs/recipe-format.md) |
 | Find a new recipe (no collection match) | [references/recipe-finder.md](references/recipe-finder.md) |
 | Plan meals / cooking for a period | [references/meal-planning.md](references/meal-planning.md) |
 | Build a shopping list from a plan | [references/shopping-list.md](references/shopping-list.md) |
