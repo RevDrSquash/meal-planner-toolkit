@@ -55,6 +55,20 @@ python .agents/skills/meal-planner-toolkit/scripts/recipe_finder.py --shortlist 
 tests; do not call the web from the script). Selected URLs still go through
 `import_recipe.py`. See [references/recipe-finder.md](../references/recipe-finder.md).
 
+## Meal + cooking plans
+
+Planning is one workflow: choose meals and group cooking sessions. Helpers
+scale servings, merge ingredients, and render `plans/YYYY-MM-DD.md`. See
+[references/meal-planning.md](../references/meal-planning.md).
+
+```bash
+python .agents/skills/meal-planner-toolkit/scripts/meal_plan.py eligible
+python .agents/skills/meal-planner-toolkit/scripts/meal_plan.py scale \
+  --from-servings 4 --to-servings 2 "500 g ground beef"
+python .agents/skills/meal-planner-toolkit/scripts/meal_plan.py render plan.json \
+  -o plans/YYYY-MM-DD.md
+```
+
 Agents can also copy `templates/recipe-template.html` into the workspace
 `recipes/` directory and fill it in directly.
 

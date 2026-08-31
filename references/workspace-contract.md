@@ -85,8 +85,9 @@ an accepted alias for the same file.
   Markdown is an input to the importer, not a second stored copy.
   `--init` writes a starter `README.md` so Git records the directory
   before any recipes exist.
-- `plans/` — generated meal plans, cooking plans, shopping plans.
-  `--init` writes a starter `README.md` so Git records the directory.
+- `plans/` — generated meal + cooking plans (one artifact per cycle) and
+  later shopping lists. `--init` writes a starter `README.md` so Git
+  records the directory.
 - `shopping/` — durable retailer/product knowledge. V2 keeps this minimal:
   `shopping/product-mappings.md` holds learned ingredient → preferred
   product, brand, and size. Generated cart or order records may appear
