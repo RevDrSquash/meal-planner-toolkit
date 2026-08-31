@@ -92,6 +92,35 @@ class RecipeFromMarkdownTests(unittest.TestCase):
             convert_file(fixture, out_dir, force=True)
             self.assertEqual(len(list(out_dir.glob("*.html"))), 1)
 
+    def test_second_scratch_recipe_writes_new_card(self) -> None:
+        first_md = (
+            "# First Scratch Recipe\n\n"
+            "- Serves: 2\n\n"
+            "## Ingredients\n"
+            "- 80 g oats\n\n"
+            "## Instructions\n"
+            "1. Mix.\n"
+        )
+        second_md = (
+            "# Second Scratch Recipe\n\n"
+            "- Serves: 2\n\n"
+            "## Ingredients\n"
+            "- 240 ml milk\n\n"
+            "## Instructions\n"
+            "1. Pour.\n"
+        )
+        with tempfile.TemporaryDirectory() as raw:
+            scratch = Path(raw) / "scratch.md"
+            out_dir = Path(raw) / "out"
+            scratch.write_text(first_md, encoding="utf-8")
+            first = convert_file(scratch, out_dir, force=False)
+            scratch.write_text(second_md, encoding="utf-8")
+            second = convert_file(scratch, out_dir, force=False)
+            self.assertEqual(first.name, "first-scratch-recipe.html")
+            self.assertEqual(second.name, "second-scratch-recipe.html")
+            self.assertNotEqual(first, second)
+            self.assertEqual(len(list(out_dir.glob("*.html"))), 2)
+
     def test_collision_still_errors(self) -> None:
         fixture = ROOT / "tests" / "fixtures" / "weeknight-chili.md"
         with tempfile.TemporaryDirectory() as raw:

@@ -304,6 +304,7 @@ FRACTIONS = {
 
 NUMBER_TOKEN = re.compile(
     r"(?P<mixed>\d+\s+\d+\s*/\s*\d+)"
+    r"|(?P<mixed_unicode>\d+\s*[½¼¾⅓⅔⅛])"
     r"|(?P<frac>\d+\s*/\s*\d+)"
     r"|(?P<decimal>\d+(?:\.\d+)?)"
     r"|(?P<unicode>[½¼¾⅓⅔⅛])"
@@ -348,6 +349,9 @@ def parse_number(token: str) -> float | None:
         return None
     if token in FRACTIONS:
         return FRACTIONS[token]
+    mixed_unicode = re.match(r"^(\d+)\s*([½¼¾⅓⅔⅛])$", token)
+    if mixed_unicode:
+        return int(mixed_unicode.group(1)) + FRACTIONS[mixed_unicode.group(2)]
     mixed = re.match(r"^(\d+)\s+(\d+)\s*/\s*(\d+)$", token)
     if mixed:
         whole, num, den = (int(p) for p in mixed.groups())
@@ -569,6 +573,8 @@ def _is_can_unit(unit: str | None, food: str) -> bool:
 
 
 def _looks_substantial(item: ParsedIngredient) -> bool:
+    if any(phrase in item.original.lower() for phrase in SKIP_PHRASES):
+        return False
     if item.food in SPICES or _clean_food_name(item.food) in SPICES:
         return False
     if item.grams is not None and item.grams >= 50:

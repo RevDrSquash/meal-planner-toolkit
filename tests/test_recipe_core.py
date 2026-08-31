@@ -15,6 +15,7 @@ from recipe_core import (  # noqa: E402
     find_existing_recipe,
     format_duration,
     iso_duration_from_human,
+    is_same_recipe,
     normalize_url,
     peek_recipe_identity,
     recipe_filename,
@@ -77,6 +78,17 @@ class HelperTests(unittest.TestCase):
             source_url="https://example.test/recipes/fallback-slug-here",
         )
         self.assertEqual(recipe_filename(untitled), "fallback-slug-here.html")
+        non_latin = _sample_recipe(
+            name="カレーライス",
+            source_url="https://example.test/recipes/karei-raisu",
+        )
+        self.assertEqual(recipe_filename(non_latin), "karei-raisu.html")
+        from_file = _sample_recipe(
+            name="麻婆豆腐",
+            source_url=None,
+            source_file="scratch.md",
+        )
+        self.assertEqual(recipe_filename(from_file), "scratch.html")
 
     def test_duration_round_trip(self) -> None:
         self.assertEqual(format_duration("PT1H20M"), "1 hr 20 min")
@@ -132,6 +144,39 @@ class RenderTests(unittest.TestCase):
 
 
 class DuplicateTests(unittest.TestCase):
+    def test_shared_scratch_file_is_not_identity(self) -> None:
+        existing = {
+            "name": "Weeknight Chili",
+            "source_url": None,
+            "source_file": "scratch.md",
+        }
+        incoming = {
+            "name": "Pantry Beans",
+            "source_url": None,
+            "source_file": "scratch.md",
+        }
+        self.assertFalse(is_same_recipe(existing, incoming))
+        self.assertTrue(is_same_recipe(existing, existing))
+
+    def test_write_keeps_distinct_scratch_recipes(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            out_dir = Path(raw)
+            first = _sample_recipe(
+                name="First Scratch Recipe",
+                source_url=None,
+                source_file="scratch.md",
+            )
+            second = _sample_recipe(
+                name="Second Scratch Recipe",
+                source_url=None,
+                source_file="scratch.md",
+            )
+            path1 = write_recipe(first, out_dir / recipe_filename(first), force=False)
+            path2 = write_recipe(second, out_dir / recipe_filename(second), force=True)
+            self.assertEqual(path1.name, "first-scratch-recipe.html")
+            self.assertEqual(path2.name, "second-scratch-recipe.html")
+            self.assertEqual(len(list(out_dir.glob("*.html"))), 2)
+
     def test_write_refuses_silent_duplicate(self) -> None:
         recipe = _sample_recipe()
         with tempfile.TemporaryDirectory() as raw:

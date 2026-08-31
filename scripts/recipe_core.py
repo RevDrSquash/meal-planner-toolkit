@@ -375,14 +375,23 @@ def recipe_filename(recipe: dict) -> str:
     """Stable, human-readable filename from the recipe name (URL slug as fallback)."""
     name = (recipe.get("name") or "").strip()
     if name and name != "Untitled Recipe":
-        return f"{slugify(name)}.html"
+        try:
+            return f"{slugify(name)}.html"
+        except ValueError:
+            pass
     if recipe.get("source_url"):
         return f"{slug_from_url(str(recipe['source_url']))}.html"
     if recipe.get("source_file"):
         stem = Path(str(recipe["source_file"])).stem
         if stem:
-            return f"{slugify(stem)}.html"
-    return f"{slugify(name or 'recipe')}.html"
+            try:
+                return f"{slugify(stem)}.html"
+            except ValueError:
+                pass
+    try:
+        return f"{slugify(name or 'recipe')}.html"
+    except ValueError:
+        return "recipe.html"
 
 
 def peek_recipe_identity(page_html: str) -> dict:
@@ -420,12 +429,16 @@ def is_same_recipe(existing: dict, incoming: dict) -> bool:
     """True when identity fields say these are the same stored recipe."""
     if _sources_match(existing.get("source_url"), incoming.get("source_url")):
         return True
+    existing_name = (existing.get("name") or "").strip().lower()
+    incoming_name = (incoming.get("name") or "").strip().lower()
     existing_file = existing.get("source_file")
     incoming_file = incoming.get("source_file")
     if existing_file and incoming_file and existing_file == incoming_file:
+        # Scratch markdown is often reused (scratch.md); the basename is
+        # not identity when the titles differ.
+        if existing_name and incoming_name and existing_name != incoming_name:
+            return False
         return True
-    existing_name = (existing.get("name") or "").strip().lower()
-    incoming_name = (incoming.get("name") or "").strip().lower()
     if existing_name and incoming_name and existing_name == incoming_name:
         return True
     return False
