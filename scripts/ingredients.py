@@ -207,6 +207,29 @@ SPICES = frozenset(
 PRODUCT_ID_KEYS = frozenset(
     {"code", "product_id", "product-id", "sku", "upc", "item_code"}
 )
+RETAILER_KEYS = PRODUCT_ID_KEYS | frozenset(
+    {
+        "articleNumber",
+        "itemNumber",
+        "item_id",
+        "offerId",
+        "offer_id",
+        "pc_express",
+        "pcexpress",
+        "price",
+        "productId",
+        "product_code",
+    }
+)
+
+ROLE_ESSENTIAL = "essential"
+ROLE_OPTIONAL = "optional"
+ROLE_GARNISH = "garnish"
+ROLE_RANK = {ROLE_ESSENTIAL: 2, ROLE_OPTIONAL: 1, ROLE_GARNISH: 0}
+
+QTY_EXACT = "exact"
+QTY_APPROXIMATE = "approximate"
+QTY_UNCERTAIN = "uncertain"
 
 
 @dataclass(frozen=True)
@@ -398,6 +421,26 @@ def display_quantity(qty: IngredientQty) -> str:
     return amount_text
 
 
+def infer_role(qty: IngredientQty | str) -> str:
+    """Essential unless the line marks optional, garnish, or serving extra."""
+    if isinstance(qty, IngredientQty):
+        blob = f"{qty.original} {qty.notes}".lower()
+    else:
+        blob = str(qty).lower()
+    if "garnish" in blob:
+        return ROLE_GARNISH
+    if "optional" in blob or "for serving" in blob:
+        return ROLE_OPTIONAL
+    return ROLE_ESSENTIAL
+
+
+def stronger_role(left: str, right: str) -> str:
+    """Keep the more essential role when merging sources."""
+    if ROLE_RANK.get(left, 0) >= ROLE_RANK.get(right, 0):
+        return left
+    return right
+
+
 def categorize_ingredient(qty: IngredientQty) -> str:
     original = qty.original.lower()
     if "frozen" in original:
@@ -458,6 +501,8 @@ def aggregate_ingredients(
                     originals=[qty.original],
                     sources=[source] if source else [],
                     category=categorize_ingredient(qty),
+                    role=infer_role(qty),
+                    quantity_status=QTY_UNCERTAIN,
                 )
             )
             continue
@@ -472,11 +517,11 @@ def aggregate_ingredients(
                     continue
                 if existing_key[2] != qty.unit_size:
                     continue
-                converted = _convert_amount(qty.amount, qty.unit, bucket.unit)
+                converted = convert_amount(qty.amount, qty.unit, bucket.unit)
                 if converted is None:
                     continue
                 compatible = replace(qty, amount=converted, unit=bucket.unit)
-                bucket.add(compatible, source)
+                bucket.add(compatible, source, converted=True)
                 merged = True
                 break
         if not merged:
@@ -562,14 +607,6 @@ def convert_amount(
     to_unit: str | None,
 ) -> float | None:
     """Convert *amount* between compatible culinary units, or return None."""
-    return _convert_amount(amount, from_unit, to_unit)
-
-
-def _convert_amount(
-    amount: float,
-    from_unit: str | None,
-    to_unit: str | None,
-) -> float | None:
     if from_unit == to_unit:
         return amount
     from_key = UNIT_CANON.get((from_unit or "").strip().lower(), from_unit)
@@ -609,6 +646,8 @@ class _Bucket:
     originals: list[str]
     sources: list[str]
     category: str
+    role: str = ROLE_ESSENTIAL
+    quantity_status: str = QTY_EXACT
 
     @classmethod
     def from_qty(cls, qty: IngredientQty, source: str | None) -> _Bucket:
@@ -621,9 +660,16 @@ class _Bucket:
             originals=[qty.original],
             sources=[source] if source else [],
             category=categorize_ingredient(qty),
+            role=infer_role(qty),
+            quantity_status=QTY_EXACT if qty.amount is not None else QTY_UNCERTAIN,
         )
 
-    def add(self, qty: IngredientQty, source: str | None) -> None:
+    def add(
+        self,
+        qty: IngredientQty,
+        source: str | None,
+        converted: bool = False,
+    ) -> None:
         if self.amount is None or qty.amount is None:
             return
         self.amount += qty.amount
@@ -633,6 +679,9 @@ class _Bucket:
             self.originals.append(qty.original)
         if source and source not in self.sources:
             self.sources.append(source)
+        self.role = stronger_role(self.role, infer_role(qty))
+        if converted:
+            self.quantity_status = QTY_APPROXIMATE
 
     def as_qty(self) -> IngredientQty:
         notes = ", ".join(self.notes)
@@ -656,6 +705,8 @@ class _Bucket:
             "display": display_quantity(qty),
             "category": self.category,
             "used_in": list(self.sources),
+            "role": self.role,
+            "quantity_status": self.quantity_status,
         }
         assert_no_product_ids(payload)
         return payload

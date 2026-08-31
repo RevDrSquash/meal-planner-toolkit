@@ -13,12 +13,18 @@ broad catalog query.
 
 ## Delegation
 
-Split the remaining to-buy list into 2–4 batches (for example produce,
-proteins, pantry/dairy). For each batch, follow
-[agents/grocery-search.md](../agents/grocery-search.md) in a subagent or
-isolated turn. Pass:
+Start from the shopping-list artifact
+([shopping-list.md](shopping-list.md)): `name`, `display` / `parts`,
+`role`, and `notes`. Do not pass recipe HTML, meal-plan internals, or
+pantry files. Skip `assumed_in_pantry`. Ask about
+`needs_confirmation` before searching.
 
-- ingredients with quantities
+Split remaining **to-buy** items whose `probe` is `search` into 2–4
+batches (for example produce, proteins, pantry/dairy). For each batch,
+follow [agents/grocery-search.md](../agents/grocery-search.md) in a
+subagent or isolated turn. Pass:
+
+- shopping-list items with quantities (`display` or `parts`)
 - relevant preferences (budget, brands, diet)
 - any known mappings from `shopping/product-mappings.md`
 
@@ -29,9 +35,9 @@ The searcher must not write the cart or mappings file.
 
 ## Without a provider
 
-If no grocery MCP/API is available, skip live search. Produce a plain
-shopping list and, when mappings exist, note the user's usual brand/size
-as a hint — not as a live price.
+If no grocery MCP/API is available, skip live search. The shopping-list
+markdown is the list the user takes to the store. When mappings exist,
+note the user's usual brand/size as a hint — not as a live price.
 
 ## Provider-specific behavior
 

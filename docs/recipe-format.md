@@ -68,6 +68,8 @@ recipe (same name or same source URL/file) is already present. Use
 3. Ignore any leftover `.md` files; they are inputs, not the collection.
 4. Scale, adapt, and aggregate with `scripts/meal_plan.py` /
    `scripts/ingredients.py`. Write one plan artifact under `plans/`.
+   After the plan is confirmed, `scripts/shopping_list.py` turns those
+   ingredient requirements into a retailer-independent shopping list.
 
 See [references/meal-planning.md](../references/meal-planning.md) and
 [references/recipe-import.md](../references/recipe-import.md).

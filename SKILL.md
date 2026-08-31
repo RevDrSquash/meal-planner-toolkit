@@ -71,14 +71,15 @@ Do not invent a household, store, or diet. Ask.
 | Plan meals / cooking for a period | [references/meal-planning.md](references/meal-planning.md) (one artifact: schedule + cooking sessions) |
 | Build a shopping list from a plan | [references/shopping-list.md](references/shopping-list.md) |
 | Resolve products / prices (read-only) | [references/product-resolution.md](references/product-resolution.md); search via [references/grocery-search.md](references/grocery-search.md), [agents/grocery-search.md](agents/grocery-search.md) |
-| Look up store products / prices | [references/product-resolution.md](references/product-resolution.md), [references/grocery-search.md](references/grocery-search.md) |
 | Provider setup or cart fill | [references/grocery-provider.md](references/grocery-provider.md) and the matching adapter (PC Express: [references/pcexpress.md](references/pcexpress.md)) |
 
 Write generated plans only under the workspace `plans/` path. A V2 plan is
 one markdown file with the meal schedule, cooking sessions, deviations,
 nutrition, and normalized ingredient requirements (never product IDs).
 Helpers: `python scripts/meal_plan.py eligible`, `scale`, `aggregate`,
-and `render`. Resolve products with
+and `render`. After the plan is confirmed, build the retailer-independent
+shopping list with `python scripts/shopping_list.py plan.json` (pantry +
+staples; no grocery MCP required). Resolve products with
 `python scripts/product_resolve.py lookup|resolve|rank|remember` — that
 helper never writes a cart. Write learned product mappings only under
 the workspace `shopping/product-mappings.md`. Update `preferences.md`,
