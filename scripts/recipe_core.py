@@ -371,18 +371,32 @@ def enrich_nutrition(recipe: dict) -> dict:
     return recipe
 
 
+def _safe_slug(text: str) -> str | None:
+    try:
+        return slugify(text)
+    except ValueError:
+        return None
+
+
 def recipe_filename(recipe: dict) -> str:
     """Stable, human-readable filename from the recipe name (URL slug as fallback)."""
     name = (recipe.get("name") or "").strip()
     if name and name != "Untitled Recipe":
-        return f"{slugify(name)}.html"
+        slug = _safe_slug(name)
+        if slug:
+            return f"{slug}.html"
     if recipe.get("source_url"):
-        return f"{slug_from_url(str(recipe['source_url']))}.html"
+        try:
+            return f"{slug_from_url(str(recipe['source_url']))}.html"
+        except ValueError:
+            pass
     if recipe.get("source_file"):
         stem = Path(str(recipe["source_file"])).stem
         if stem:
-            return f"{slugify(stem)}.html"
-    return f"{slugify(name or 'recipe')}.html"
+            slug = _safe_slug(stem)
+            if slug:
+                return f"{slug}.html"
+    return "recipe.html"
 
 
 def peek_recipe_identity(page_html: str) -> dict:
@@ -417,12 +431,12 @@ def _sources_match(left: str | None, right: str | None) -> bool:
 
 
 def is_same_recipe(existing: dict, incoming: dict) -> bool:
-    """True when identity fields say these are the same stored recipe."""
+    """True when identity fields say these are the same stored recipe.
+
+    A shared source filename (``scratch.md``) is not identity on its own:
+    the documented hand-author path reuses one scratch file for many recipes.
+    """
     if _sources_match(existing.get("source_url"), incoming.get("source_url")):
-        return True
-    existing_file = existing.get("source_file")
-    incoming_file = incoming.get("source_file")
-    if existing_file and incoming_file and existing_file == incoming_file:
         return True
     existing_name = (existing.get("name") or "").strip().lower()
     incoming_name = (incoming.get("name") or "").strip().lower()

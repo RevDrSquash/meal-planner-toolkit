@@ -15,6 +15,7 @@ from recipe_core import (  # noqa: E402
     find_existing_recipe,
     format_duration,
     iso_duration_from_human,
+    is_same_recipe,
     normalize_url,
     peek_recipe_identity,
     recipe_filename,
@@ -66,6 +67,33 @@ class HelperTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             slugify("???")
+
+    def test_filename_falls_back_when_name_has_no_ascii(self) -> None:
+        self.assertEqual(
+            recipe_filename(
+                _sample_recipe(
+                    name="カレー",
+                    source_url="https://example.test/recipes/japanese-curry",
+                )
+            ),
+            "japanese-curry.html",
+        )
+        self.assertEqual(
+            recipe_filename(
+                _sample_recipe(
+                    name="カレー",
+                    source_url=None,
+                    source_file="family-notebook.md",
+                )
+            ),
+            "family-notebook.html",
+        )
+        self.assertEqual(
+            recipe_filename(
+                _sample_recipe(name="カレー", source_url=None, source_file=None)
+            ),
+            "recipe.html",
+        )
 
     def test_filename_prefers_human_readable_name(self) -> None:
         recipe = _sample_recipe(
@@ -164,6 +192,20 @@ class DuplicateTests(unittest.TestCase):
             self.assertEqual(path, renamed)
             self.assertIn("Leftovers freeze well", path.read_text(encoding="utf-8"))
             self.assertEqual(len(list(out_dir.glob("*.html"))), 1)
+
+    def test_same_scratch_file_is_not_identity(self) -> None:
+        first = _sample_recipe(
+            name="Weeknight Chili",
+            source_url=None,
+            source_file="scratch.md",
+        )
+        second = _sample_recipe(
+            name="Lemon Pasta",
+            source_url=None,
+            source_file="scratch.md",
+        )
+        self.assertFalse(is_same_recipe(first, second))
+        self.assertTrue(is_same_recipe(first, dict(first)))
 
     def test_find_existing_ignores_different_card_on_slug(self) -> None:
         recipe = _sample_recipe()

@@ -31,6 +31,7 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(parse_number("1/2"), 0.5)
         self.assertEqual(parse_number("1 1/2"), 1.5)
         self.assertEqual(parse_number("½"), 0.5)
+        self.assertEqual(parse_number("1½"), 1.5)
 
     def test_parse_weighted_ingredient(self) -> None:
         parsed = parse_ingredient("500 g ground beef")
@@ -138,6 +139,30 @@ class EstimateTests(unittest.TestCase):
     def test_refuses_empty(self) -> None:
         self.assertIsNone(estimate_macros([], "2"))
         self.assertIsNone(estimate_macros(["salt to taste", "pepper to taste"], "2"))
+
+    def test_mixed_unicode_fraction_is_weighed(self) -> None:
+        parsed = parse_ingredient("1½ cups milk")
+        self.assertAlmostEqual(parsed.grams or 0, 1.5 * 244)
+        self.assertEqual(parsed.food, "milk")
+        result = estimate_macros(
+            ["80 g oats", "1½ cups milk", "1 banana"],
+            "2",
+        )
+        self.assertIsNotNone(result)
+
+    def test_optional_garnish_lines_do_not_block_estimate(self) -> None:
+        result = estimate_macros(
+            [
+                "80 g oats",
+                "240 ml milk",
+                "1 banana",
+                "2 tbsp yogurt for serving",
+                "cilantro for garnish",
+                "hot sauce, optional",
+            ],
+            "2",
+        )
+        self.assertIsNotNone(result)
 
 
 if __name__ == "__main__":

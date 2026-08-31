@@ -39,6 +39,20 @@ class RecipeFromMarkdownTests(unittest.TestCase):
             path = convert_file(scratch, Path(raw) / "out", force=True)
             self.assertEqual(path.name, "weeknight-chili.html")
 
+    def test_second_recipe_from_same_scratch_file_writes_new_card(self) -> None:
+        chili = ROOT / "tests" / "fixtures" / "weeknight-chili.md"
+        oats = ROOT / "tests" / "fixtures" / "minimal-recipe.md"
+        with tempfile.TemporaryDirectory() as raw:
+            out_dir = Path(raw) / "recipes"
+            scratch = Path(raw) / "scratch.md"
+            scratch.write_text(chili.read_text(encoding="utf-8"), encoding="utf-8")
+            first = convert_file(scratch, out_dir, force=False)
+            scratch.write_text(oats.read_text(encoding="utf-8"), encoding="utf-8")
+            second = convert_file(scratch, out_dir, force=False)
+            self.assertEqual(first.name, "weeknight-chili.html")
+            self.assertEqual(second.name, "overnight-oats.html")
+            self.assertEqual(len(list(out_dir.glob("*.html"))), 2)
+
     def test_missing_heading_raises(self) -> None:
         text = (ROOT / "tests" / "fixtures" / "no-heading.md").read_text(encoding="utf-8")
         with self.assertRaises(ValueError):
