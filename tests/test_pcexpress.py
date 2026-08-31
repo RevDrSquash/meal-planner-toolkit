@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -401,6 +402,7 @@ class ExampleAndTemplateTests(unittest.TestCase):
 
 class ServeFailureTests(unittest.TestCase):
     def _workspace(self, root: Path, *, vendor: bool = True) -> Path:
+        root.mkdir(parents=True, exist_ok=True)
         (root / "workspace.yaml").write_text("version: 2\n", encoding="utf-8")
         (root / "recipes").mkdir()
         if vendor:
@@ -409,21 +411,63 @@ class ServeFailureTests(unittest.TestCase):
             script.write_text("# fake vendored server\n", encoding="utf-8")
         return root
 
+    def _launch_argv(self, root: Path, extra: list[str], *, os_name: str) -> list[str]:
+        """serve() with the platform branch forced; returns the argv it launched.
+
+        Forcing os.name keeps both branches covered wherever the suite runs,
+        so a POSIX CI box still exercises the Windows path and vice versa.
+        """
+        with mock.patch("pcexpress.find_workspace_root", return_value=root):
+            with mock.patch("pcexpress.os.name", os_name):
+                with mock.patch("pcexpress.os.execv") as execv:
+                    with mock.patch("pcexpress.subprocess.run") as run:
+                        run.return_value = subprocess.CompletedProcess([], 0)
+                        with mock.patch("pcexpress.os.chdir"):
+                            serve(extra)
+        if os_name == "nt":
+            run.assert_called_once()
+            execv.assert_not_called()
+            return list(run.call_args[0][0])
+        execv.assert_called_once()
+        run.assert_not_called()
+        return list(execv.call_args[0][1])
+
     def test_serve_appends_gitignore_and_forwards_http(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = self._workspace(Path(raw))
-            with mock.patch("pcexpress.find_workspace_root", return_value=root):
-                with mock.patch("pcexpress.os.execv") as execv:
-                    with mock.patch("pcexpress.os.chdir"):
-                        serve(["--http"])
+            launched = self._launch_argv(root, ["--http"], os_name="posix")
             gitignore = (root / ".gitignore").read_text(encoding="utf-8")
             self.assertIn(".env", gitignore)
             self.assertIn(".pcexpress-mcp/", gitignore)
-            execv.assert_called_once()
-            launched = execv.call_args[0][1]
             self.assertEqual(launched[0], sys.executable)
             self.assertEqual(launched[-1], "--http")
             self.assertTrue(str(launched[1]).endswith(SERVER_SCRIPT))
+
+    def test_serve_uses_subprocess_on_windows(self) -> None:
+        """os.execv on Windows does not quote argv; serve() must not use it."""
+        with tempfile.TemporaryDirectory() as raw:
+            root = self._workspace(Path(raw))
+            launched = self._launch_argv(root, ["--http"], os_name="nt")
+            self.assertEqual(launched[0], sys.executable)
+            self.assertEqual(launched[-1], "--http")
+            self.assertTrue(str(launched[1]).endswith(SERVER_SCRIPT))
+
+    def test_serve_keeps_spaced_workspace_path_in_one_argument(self) -> None:
+        r"""Regression: a workspace path with spaces must survive as one argv entry.
+
+        os.execv on Windows hands argv to the CRT unquoted, so
+        "...\Meal Planning\..." was re-split and the child tried to open a
+        truncated path. Both branches must pass the script as a single item.
+        """
+        for os_name in ("nt", "posix"):
+            with self.subTest(os_name=os_name):
+                with tempfile.TemporaryDirectory() as raw:
+                    root = self._workspace(Path(raw) / "Life Admin" / "Meal Planning")
+                    launched = self._launch_argv(root, [], os_name=os_name)
+                    script = str(launched[1])
+                    self.assertIn("Meal Planning", script)
+                    self.assertTrue(script.endswith(SERVER_SCRIPT))
+                    self.assertEqual(len(launched), 2)
 
     def test_serve_returns_error_without_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

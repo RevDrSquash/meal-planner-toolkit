@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -86,6 +87,27 @@ def vendor_dir(workspace: Path) -> Path:
 
 def server_script(workspace: Path) -> Path:
     return vendor_dir(workspace) / SERVER_SCRIPT
+
+
+def vendor_commit(workspace: Path) -> str | None:
+    """Currently checked-out commit of the vendored server, or None.
+
+    Local git only; never contacts the network. Returns None when git is
+    unavailable or the vendor directory is not a checkout, so callers treat
+    an unknown commit as "cannot verify" rather than "wrong".
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(vendor_dir(workspace)), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
 
 
 def default_state_dir(workspace: Path) -> Path:
@@ -254,6 +276,7 @@ class ConfigStatus:
     obsolete_env: tuple[str, ...]
     missing_gitignore: tuple[str, ...]
     state_dir: Path
+    vendor_commit: str | None
     errors: tuple[str, ...]
     warnings: tuple[str, ...]
 
@@ -329,6 +352,15 @@ def check_config(workspace: Path | None = None) -> ConfigStatus:
             "parent repo). --serve will append missing entries."
         )
 
+    commit = vendor_commit(root) if vendor_ok else None
+    if commit and commit != REVIEWED_COMMIT:
+        warnings.append(
+            f"Vendored server is at {commit[:12]}, not the reviewed pin "
+            f"{REVIEWED_COMMIT[:12]}. The two can expect different auth and "
+            "search APIs, which fails at launch rather than here. Re-pin: "
+            f"git -C {VENDOR_RELATIVE} checkout {REVIEWED_COMMIT}"
+        )
+
     return ConfigStatus(
         workspace=root,
         vendor_ok=vendor_ok,
@@ -338,6 +370,7 @@ def check_config(workspace: Path | None = None) -> ConfigStatus:
         obsolete_env=obsolete,
         missing_gitignore=missing_gitignore,
         state_dir=state_dir,
+        vendor_commit=commit,
         errors=tuple(errors),
         warnings=tuple(warnings),
     )
@@ -407,7 +440,15 @@ def serve(extra_args: list[str] | None = None) -> int:
         print(f"warning: could not update workspace .gitignore: {exc}", file=sys.stderr)
     apply_serve_env(plan)
     os.chdir(plan.workspace)
-    os.execv(sys.executable, [sys.executable, str(plan.script), *plan.extra_args])
+    argv = [sys.executable, str(plan.script), *plan.extra_args]
+    if os.name == "nt":
+        # os.execv on Windows hands argv to the CRT without quoting, so any
+        # argument containing a space is re-split by the child. A workspace
+        # path like "...\Meal Planning\vendor\..." is then truncated at the
+        # first space and the server exits before it can speak MCP. Run it as
+        # a child process and forward its exit code instead.
+        return subprocess.run(argv).returncode
+    os.execv(sys.executable, argv)
     return 1  # pragma: no cover — execv does not return
 
 
@@ -435,6 +476,9 @@ def _print_check() -> int:
     print(f"workspace\t{status.workspace}")
     print(f"vendor\t{'ok' if status.vendor_ok else 'missing'}")
     print(f"server\t{'ok' if status.server_ok else 'missing'}")
+    if status.vendor_commit:
+        pinned = "pinned" if status.vendor_commit == REVIEWED_COMMIT else "UNPINNED"
+        print(f"vendor_commit\t{status.vendor_commit[:12]}\t{pinned}")
     print(f"env\t{status.env_path or 'missing'}")
     print(f"state_dir\t{status.state_dir}")
     if status.missing_env:
