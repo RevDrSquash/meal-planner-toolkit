@@ -88,6 +88,7 @@ SIZE_TOKEN = re.compile(
     r"tsp|tbsp|cups?|cans?|ct|count|each|ea|pk|pack)\b",
     re.IGNORECASE,
 )
+PACK_PREFIX = re.compile(r"(\d+)\s*[x×]\s*$", re.IGNORECASE)
 PRICE_JUNK = re.compile(r"[^0-9.+-]")
 
 
@@ -222,13 +223,16 @@ def parse_mapping_line(line: str) -> ProductMapping | None:
             notes = notes.strip()
             break
     size = ""
-    size_match = None
-    for size_match in SIZE_TOKEN.finditer(body):
-        pass
+    size_match, pack_count = _primary_size_match(body)
     if size_match:
         amount = size_match.group("amount").replace(",", ".")
-        size = f"{amount} {size_match.group('unit').lower()}"
-        label = (body[: size_match.start()] + body[size_match.end() :]).strip()
+        unit = size_match.group("unit").lower()
+        size = f"{pack_count} x {amount} {unit}" if pack_count > 1 else f"{amount} {unit}"
+        start = size_match.start()
+        prefix = PACK_PREFIX.search(body[:start])
+        if prefix:
+            start = prefix.start()
+        label = (body[:start] + body[size_match.end() :]).strip()
     else:
         label = body
     label = label.strip(" ,-—")
@@ -275,11 +279,6 @@ def lookup_mapping(
         return None
     for item in mappings:
         if item.ingredient == wanted:
-            return item
-    for item in mappings:
-        if item.ingredient in wanted or wanted in item.ingredient:
-            if len(item.ingredient) < 3 or len(wanted) < 3:
-                continue
             return item
     return None
 
@@ -410,9 +409,7 @@ def parse_package_qty(size: str | None) -> IngredientQty | None:
     if not size or not str(size).strip():
         return None
     text = str(size).strip()
-    match = None
-    for match in SIZE_TOKEN.finditer(text):
-        pass
+    match, pack_count = _primary_size_match(text)
     if not match:
         qty = parse_ingredient_qty(text)
         if qty.amount is None:
@@ -421,6 +418,7 @@ def parse_package_qty(size: str | None) -> IngredientQty | None:
     amount = parse_number(match.group("amount").replace(",", "."))
     if amount is None:
         return None
+    amount *= pack_count
     unit = match.group("unit").lower()
     if unit in {"l", "liter", "liters", "litre", "litres"}:
         unit = "l"
@@ -580,7 +578,8 @@ def mapping_still_usable(
         category=category,
         notes=needed.notes,
     )
-    if excess.severity == "substantial" and excess.perishable:
+    # Dairy cartons are household staples even when a recipe needs a cup.
+    if excess.severity == "substantial" and excess.perishable and category != "dairy":
         return False
     return True
 
@@ -594,8 +593,14 @@ def candidate_matches_mapping(
     if mapped_id and cand_id and mapped_id == cand_id:
         return True
     if mapping.brand and _brand_match(candidate, mapping.brand):
-        if not mapping.size or _sizes_compatible(mapping.size, candidate.package_size):
-            return True
+        if mapping.size and not _sizes_compatible(mapping.size, candidate.package_size):
+            return False
+        if not (
+            _titles_match(mapping.name, candidate.name)
+            or _titles_match(mapping.name, candidate.label)
+        ):
+            return False
+        return True
     return False
 
 
@@ -1067,7 +1072,11 @@ def _resolve_without_candidates(
     reason = "learned mapping"
     if not mapping.product_id:
         reason = "learned brand/size hint; prices not live-checked"
-    elif excess.severity == "substantial" and excess.perishable:
+    elif (
+        excess.severity == "substantial"
+        and excess.perishable
+        and row["category"] != "dairy"
+    ):
         probe = "search"
         reason = "learned product size looks far too large; search for a smaller pack"
     return Resolution(
@@ -1114,12 +1123,7 @@ def _candidates_for(
     candidate_map: dict[str, list[ProductCandidate]],
 ) -> list[ProductCandidate]:
     key = normalize_name(name) or name.lower()
-    if key in candidate_map:
-        return candidate_map[key]
-    for stored, rows in candidate_map.items():
-        if stored == key or stored in key or key in stored:
-            return rows
-    return []
+    return candidate_map.get(key, [])
 
 
 def _candidate_diet_hits(candidate: ProductCandidate, prefs: dict) -> list[str]:
@@ -1130,6 +1134,36 @@ def _candidate_diet_hits(candidate: ProductCandidate, prefs: dict) -> list[str]:
         "ingredients": [candidate.label],
     }
     return restriction_hits(blob, prefs)
+
+
+def _primary_size_match(text: str) -> tuple[re.Match[str] | None, int]:
+    """First size token, with an optional leading ``N x`` pack count."""
+    match = SIZE_TOKEN.search(text)
+    if not match:
+        return None, 1
+    prefix = PACK_PREFIX.search(text[: match.start()])
+    count = int(prefix.group(1)) if prefix else 1
+    return match, count if count > 0 else 1
+
+
+def _titles_match(left: str, right: str) -> bool:
+    """True when two product titles name the same item (not a raw substring)."""
+    a = " ".join(left.lower().split())
+    b = " ".join(right.lower().split())
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    a_words = a.split()
+    b_words = b.split()
+    shorter, longer = (a_words, b_words) if len(a_words) <= len(b_words) else (b_words, a_words)
+    if len(shorter) < 2:
+        return False
+    size = len(shorter)
+    for index in range(len(longer) - size + 1):
+        if longer[index : index + size] == shorter:
+            return True
+    return False
 
 
 def _brand_match(candidate: ProductCandidate, brand: str) -> bool:
