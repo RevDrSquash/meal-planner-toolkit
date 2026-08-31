@@ -1,6 +1,6 @@
 ---
 name: meal-planner-toolkit
-description: Plans meals from a private recipe collection, imports and normalizes recipes, builds shopping lists, and optionally resolves grocery products or fills a cart. Use when the user asks to plan meals, cook for the week, import a recipe, update pantry or staples, shop, or work with PC Express / Superstore.
+description: Plans meals from a private recipe collection, imports and finds recipes, builds shopping lists, and optionally resolves grocery products or fills a cart. Use when the user asks to plan meals, cook for the week, find or import a recipe, update pantry or staples, shop, or work with PC Express / Superstore.
 ---
 
 # Meal Planner Toolkit
@@ -67,7 +67,7 @@ Do not invent a household, store, or diet. Ask.
 |---|---|
 | First-time setup / missing workspace files | [references/onboarding.md](references/onboarding.md) |
 | Import or add a recipe | [references/recipe-import.md](references/recipe-import.md), [docs/recipe-format.md](docs/recipe-format.md) |
-| Find a new recipe (no collection match) | [references/recipe-finder.md](references/recipe-finder.md) |
+| Find or discover recipes to add | [references/recipe-finder.md](references/recipe-finder.md), [agents/recipe-finder.md](agents/recipe-finder.md) |
 | Plan meals / cooking for a period | [references/meal-planning.md](references/meal-planning.md) |
 | Build a shopping list from a plan | [references/shopping-list.md](references/shopping-list.md) |
 | Look up store products / prices | [references/grocery-search.md](references/grocery-search.md), [agents/grocery-search.md](agents/grocery-search.md) |
@@ -89,3 +89,6 @@ user says the change is lasting.
   a shopping list the user can take to any store.
 - Keep bulky product-search results out of the main thread: delegate to a
   grocery-search subagent using [agents/grocery-search.md](agents/grocery-search.md).
+- Keep bulky recipe-search results out of the main thread: delegate discovery
+  with [agents/recipe-finder.md](agents/recipe-finder.md), then import only
+  the recipes the user picks via [references/recipe-import.md](references/recipe-import.md).

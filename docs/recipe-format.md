@@ -48,6 +48,10 @@ All of these produce the same HTML:
 3. **Hand-authored HTML** — copy [templates/recipe-template.html](../templates/recipe-template.html)
    into `recipes/<slug>.html` and replace the example values. Keep the JSON-LD
    block in sync with the visible card.
+4. **Discovery** — [references/recipe-finder.md](../references/recipe-finder.md)
+   shortlists public URLs against preferences and the local collection.
+   Chosen recipes still go through `import_recipe.py`; there is no second
+   storage format.
 
 PDF files are not ingested. Convert them to markdown or HTML first.
 

@@ -46,7 +46,14 @@ becomes one HTML card; see [recipe-format.md](recipe-format.md).
 ```bash
 python .agents/skills/meal-planner-toolkit/scripts/import_recipe.py <url>
 python .agents/skills/meal-planner-toolkit/scripts/recipe_from_markdown.py recipe.md
+python .agents/skills/meal-planner-toolkit/scripts/recipe_finder.py --check-collection
+python .agents/skills/meal-planner-toolkit/scripts/recipe_finder.py --shortlist candidates.json \
+  --request "vegetarian weeknight chili"
 ```
+
+`--shortlist` ranks a JSON array of search hits (use mocked fixtures in
+tests; do not call the web from the script). Selected URLs still go through
+`import_recipe.py`. See [references/recipe-finder.md](../references/recipe-finder.md).
 
 Agents can also copy `templates/recipe-template.html` into the workspace
 `recipes/` directory and fill it in directly.
