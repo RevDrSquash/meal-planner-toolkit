@@ -105,6 +105,8 @@ class ScaleLineTests(unittest.TestCase):
     def test_format_common_fractions(self) -> None:
         self.assertEqual(format_amount(0.5, "cup"), "½")
         self.assertEqual(format_amount(1.5, "cup"), "1½")
+        self.assertEqual(format_amount(2, "cup"), "2")
+        self.assertEqual(format_amount(3, None), "3")
         self.assertEqual(format_amount(250, "g"), "250")
 
 

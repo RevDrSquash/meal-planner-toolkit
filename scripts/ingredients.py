@@ -359,7 +359,7 @@ def format_amount(amount: float, unit: str | None = None) -> str:
     whole = int(amount)
     frac = amount - whole
     nearest = _nearest_fraction(frac)
-    if nearest is None:
+    if nearest is None or nearest == 0.0:
         if abs(amount - round(amount)) < 1e-6:
             return str(int(round(amount)))
         return f"{amount:.2f}".rstrip("0").rstrip(".")
@@ -546,7 +546,7 @@ def _unit_noun(unit: str, amount: float) -> str:
 
 def _nearest_fraction(frac: float, tolerance: float = 0.03) -> float | None:
     if frac < 1e-6:
-        return 0.0 if frac >= 0 else None
+        return None
     best = None
     best_delta = tolerance
     for value in FRACTION_CHARS:
