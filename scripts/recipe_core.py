@@ -45,6 +45,7 @@ ISO_DURATION = re.compile(
     re.IGNORECASE,
 )
 SLUG_STRIP = re.compile(r"[^a-z0-9]+")
+FILENAME_UNSAFE = re.compile(r'[<>:"/\\|?*\x00-\x1f]+')
 H1_BLOCK = re.compile(r"<h1[^>]*>(.*?)</h1>", re.DOTALL | re.IGNORECASE)
 SOURCE_URL_BLOCK = re.compile(
     r'<p>\s*Source:\s*<a href="([^"]+)"',
@@ -378,6 +379,14 @@ def _safe_slug(text: str) -> str | None:
         return None
 
 
+def _filename_stem(text: str) -> str | None:
+    """Filesystem-safe stem that keeps letters slugify would drop."""
+    stem = re.sub(r"\s+", "-", text.strip().casefold())
+    stem = FILENAME_UNSAFE.sub("-", stem)
+    stem = re.sub(r"-{2,}", "-", stem).strip(".-")
+    return stem or None
+
+
 def recipe_filename(recipe: dict) -> str:
     """Stable, human-readable filename from the recipe name (URL slug as fallback)."""
     name = (recipe.get("name") or "").strip()
@@ -390,6 +399,10 @@ def recipe_filename(recipe: dict) -> str:
             return f"{slug_from_url(str(recipe['source_url']))}.html"
         except ValueError:
             pass
+    if name and name != "Untitled Recipe":
+        stem = _filename_stem(name)
+        if stem:
+            return f"{stem}.html"
     if recipe.get("source_file"):
         stem = Path(str(recipe["source_file"])).stem
         if stem:

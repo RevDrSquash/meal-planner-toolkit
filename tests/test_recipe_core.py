@@ -86,13 +86,23 @@ class HelperTests(unittest.TestCase):
                     source_file="family-notebook.md",
                 )
             ),
-            "family-notebook.html",
+            "カレー.html",
         )
         self.assertEqual(
             recipe_filename(
                 _sample_recipe(name="カレー", source_url=None, source_file=None)
             ),
-            "recipe.html",
+            "カレー.html",
+        )
+        self.assertEqual(
+            recipe_filename(
+                _sample_recipe(
+                    name="ラーメン",
+                    source_url=None,
+                    source_file="scratch.md",
+                )
+            ),
+            "ラーメン.html",
         )
 
     def test_filename_prefers_human_readable_name(self) -> None:
@@ -206,6 +216,28 @@ class DuplicateTests(unittest.TestCase):
         )
         self.assertFalse(is_same_recipe(first, second))
         self.assertTrue(is_same_recipe(first, dict(first)))
+
+    def test_non_latin_names_from_scratch_write_distinct_cards(self) -> None:
+        first = _sample_recipe(
+            name="カレー",
+            source_url=None,
+            source_file="scratch.md",
+        )
+        second = _sample_recipe(
+            name="ラーメン",
+            source_url=None,
+            source_file="scratch.md",
+        )
+        self.assertNotEqual(recipe_filename(first), recipe_filename(second))
+        with tempfile.TemporaryDirectory() as raw:
+            out_dir = Path(raw)
+            path1 = write_recipe(first, out_dir / recipe_filename(first), force=False)
+            path2 = write_recipe(second, out_dir / recipe_filename(second), force=False)
+            self.assertNotEqual(path1, path2)
+            self.assertEqual(len(list(out_dir.glob("*.html"))), 2)
+            with self.assertRaises(RecipeExistsError) as ctx:
+                write_recipe(first, out_dir / recipe_filename(first), force=False)
+            self.assertTrue(ctx.exception.same_recipe)
 
     def test_find_existing_ignores_different_card_on_slug(self) -> None:
         recipe = _sample_recipe()
