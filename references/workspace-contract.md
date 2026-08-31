@@ -89,10 +89,13 @@ an accepted alias for the same file.
   shopping-list handoffs (`YYYY-MM-DD-shopping.json` / `.md`), and
   optional proposed-cart artifacts (`YYYY-MM-DD-cart.json` / `.md`).
   `--init` writes a starter `README.md` so Git records the directory.
-- `shopping/` — durable retailer/product knowledge. V2 keeps this minimal:
-  `shopping/product-mappings.md` holds learned ingredient → preferred
-  product, brand, and size. Proposed-cart JSON for one order lives with
-  the plan under `plans/`, not here. Never store credentials here.
+- `shopping/` — durable retailer/product knowledge. V2 keeps this
+  minimal: `shopping/product-mappings.md` is enough. It holds learned
+  ingredient → preferred product, brand, and size. Meal-plan shopping
+  lists and proposed-cart JSON for one order already live with the plan
+  under `plans/`. Do not add a second generated-cart or order-history
+  file unless a later workflow needs it. Never store credentials or
+  raw catalog dumps here.
 
 ## Provider / store configuration
 

@@ -37,10 +37,13 @@ product identifiers that are not already in workspace
 
 - Cart writes stay in the parent conversation, after the user confirms the
   plan, pantry check, excess flags, and the [proposed cart](cart.md).
+  Product resolution is a separate read-only step
+  ([product-resolution.md](product-resolution.md)).
 - Search-only work may be delegated to a grocery-search subagent.
 - Persist successful product identities in the workspace
   `shopping/product-mappings.md` (and `pantry.md` when the user wants a
-  staple pinned). Never persist tokens or customer IDs in markdown.
+  staple pinned). Never persist tokens, customer IDs, or raw search
+  payloads in markdown.
 - If the adapter is missing or auth fails, degrade to a file-based list.
 
 ## Workspace wiring

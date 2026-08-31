@@ -126,10 +126,12 @@ There is no checkout tool. Search subagents may use the read-only tools
 only. They must never call `add_to_cart` or `remove_from_cart`.
 
 The parent uses past-order search for brand/size hints, then passes those
-hints to the scout. Search and resolution do not require cart-write
-permission; a search-only tool set can still produce picks. Only the
-parent writes the cart, and only after the user approves the
-[proposed cart](cart.md).
+hints to the scout and ranks picks with
+[product-resolution.md](product-resolution.md). Search and resolution
+do not require cart-write permission; a search-only tool set can still
+produce picks. Only the parent writes the cart, and only after the
+user approves the [proposed cart](cart.md). Search and resolve never
+call cart tools.
 
 ```bash
 python .agents/skills/meal-planner-toolkit/scripts/cart.py capabilities --adapter pcexpress

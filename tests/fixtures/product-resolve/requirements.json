@@ -1,0 +1,23 @@
+[
+  {
+    "name": "soy sauce",
+    "amount": 2,
+    "unit": "tbsp",
+    "display": "2 tbsp",
+    "category": "pantry"
+  },
+  {
+    "name": "milk",
+    "amount": 1,
+    "unit": "cup",
+    "display": "1 cup",
+    "category": "dairy"
+  },
+  {
+    "name": "ground beef",
+    "amount": 500,
+    "unit": "g",
+    "display": "500 g",
+    "category": "proteins"
+  }
+]

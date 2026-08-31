@@ -60,11 +60,12 @@ and any PC Express / offer identifiers.
 3. Review the markdown with the user: to-buy, confirm-before-skipping,
    assumed pantry stock, uncertain quantities, and recorded substitutions.
 4. If a grocery provider is configured, resolve **to-buy** items via
-   [grocery-search.md](grocery-search.md). Leave
-   `needs_confirmation` items unresolved until the user says they are
-   actually out. Do not write product codes back onto the meal plan.
+   [product-resolution.md](product-resolution.md) (search is delegated;
+   the cart is not written). Leave `needs_confirmation` items unresolved
+   until the user says they are actually out. Do not write product codes
+   back onto the meal plan.
 5. Excess flags (shoppable size far larger than needed) belong after
-   product search, not in this intermediate list. Review them on the
+   product resolution, not in this intermediate list. Review them on the
    [proposed cart](cart.md) together with substitutions, unavailable
    items, and optional skips. Do not write the remote cart until the
    user approves that proposal.
@@ -86,5 +87,7 @@ and any PC Express / offer identifiers.
 ## Learned mappings
 
 When a product is confirmed in a cart or the user says "this is what I
-buy", append a line to `shopping/product-mappings.md`. Never invent a
-product code. Never put mappings in this toolkit repo.
+buy", persist it with `python scripts/product_resolve.py remember` (or
+append a line to `shopping/product-mappings.md`). Never invent a
+product code. Never put mappings in this toolkit repo. Do not store raw
+search results or cart snapshots; the shopping list lives with the plan.

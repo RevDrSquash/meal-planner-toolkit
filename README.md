@@ -18,6 +18,8 @@ tied to Claude Code, Cursor, or any other single host.
 - Structured meal + cooking plan helpers (serving scale, ingredient
   aggregation, plan render)
 - Retailer-independent shopping-list handoff (pantry/staples, human list)
+- Grocery product resolution and learned mapping helpers (mocked
+  candidates only; no retailer calls)
 - Output templates (meal plan, cooking plan, shopping list, nutrition)
 - Grocery-provider contract (search without cart-write is valid) and an optional PC Express adapter
 - Proposed-cart review, approval gate, and mocked cart mutation helpers
@@ -57,7 +59,7 @@ if needed, then route to the matching file under `references/`.
 SKILL.md                 # orchestrator
 agents/                  # subagent instructions (host-neutral)
 references/              # workflows and contracts
-scripts/                 # workspace locator/init, import, recipe finder, meal plan, shopping list, cart proposal, optional PC Express
+scripts/                 # workspace locator/init, import, recipe finder, meal plan, shopping list, product resolve, cart proposal, optional PC Express
 templates/               # empty/skeleton user files and plan formats
 examples/workspace/      # synthetic household for docs/tests
 tests/                   # synthetic fixtures only

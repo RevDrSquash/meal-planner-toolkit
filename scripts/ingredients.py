@@ -76,7 +76,6 @@ VOLUME_TO_ML = {
     "tbsp": 15.0,
     "cup": 240.0,
 }
-SPOON_UNITS = frozenset({"tsp", "tbsp"})
 
 UNIT_DISPLAY = {
     "g": ("g", "g"),
@@ -607,17 +606,19 @@ def convert_amount(
     from_unit: str | None,
     to_unit: str | None,
 ) -> float | None:
+    """Convert *amount* between compatible culinary units, or return None."""
     if from_unit == to_unit:
         return amount
-    if from_unit in MASS_TO_G and to_unit in MASS_TO_G:
-        grams = amount * MASS_TO_G[from_unit]
-        return grams / MASS_TO_G[to_unit]
-    if from_unit in SPOON_UNITS and to_unit in SPOON_UNITS:
-        ml = amount * VOLUME_TO_ML[from_unit]
-        return ml / VOLUME_TO_ML[to_unit]
-    if from_unit in {"ml", "l"} and to_unit in {"ml", "l"}:
-        ml = amount * VOLUME_TO_ML[from_unit]
-        return ml / VOLUME_TO_ML[to_unit]
+    from_key = UNIT_CANON.get((from_unit or "").strip().lower(), from_unit)
+    to_key = UNIT_CANON.get((to_unit or "").strip().lower(), to_unit)
+    if from_key == to_key:
+        return amount
+    if from_key in MASS_TO_G and to_key in MASS_TO_G:
+        grams = amount * MASS_TO_G[from_key]
+        return grams / MASS_TO_G[to_key]
+    if from_key in VOLUME_TO_ML and to_key in VOLUME_TO_ML:
+        ml = amount * VOLUME_TO_ML[from_key]
+        return ml / VOLUME_TO_ML[to_key]
     return None
 
 
