@@ -78,6 +78,23 @@ The shopping-list script does not need a grocery provider. See
 Agents can also copy `templates/recipe-template.html` into the workspace
 `recipes/` directory and fill it in directly.
 
+## Product resolution
+
+Read-only. Resolve a shopping list to compact product picks, prefer
+learned mappings, and flag excess. Helpers never call a retailer and
+never write a cart. See
+[references/product-resolution.md](../references/product-resolution.md).
+
+```bash
+python .agents/skills/meal-planner-toolkit/scripts/product_resolve.py \
+  lookup "soy sauce"
+python .agents/skills/meal-planner-toolkit/scripts/product_resolve.py \
+  resolve requirements.json --candidates hits.json
+```
+
+`--candidates` is mocked or subagent JSON. Persist a confirmed product
+with `remember` into the workspace `shopping/product-mappings.md` only.
+
 ## Optional PC Express cart
 
 See `references/pcexpress.md`. In short: vendor the reviewed

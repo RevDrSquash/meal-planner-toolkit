@@ -1,0 +1,75 @@
+{
+  "soy sauce": [
+    {
+      "id": "EXAMPLE-SOY-500",
+      "brand": "Example Brand",
+      "name": "Soy Sauce",
+      "size": "500 ml",
+      "price": 3.49,
+      "unit_price": 0.70,
+      "on_sale": false,
+      "available": true
+    },
+    {
+      "id": "EXAMPLE-SOY-1890",
+      "brand": "Warehouse Brand",
+      "name": "Soy Sauce",
+      "size": "1.89 L",
+      "price": 6.99,
+      "on_sale": true,
+      "available": true
+    },
+    {
+      "id": "EXAMPLE-SOY-250",
+      "brand": "Other Brand",
+      "name": "Soy Sauce",
+      "size": "250 ml",
+      "price": 2.79,
+      "available": true
+    }
+  ],
+  "milk": [
+    {
+      "id": "EXAMPLE-MILK-1L",
+      "brand": "Example Dairy",
+      "name": "2% Milk",
+      "size": "1 L",
+      "price": 3.29,
+      "available": false
+    },
+    {
+      "id": "EXAMPLE-MILK-2L",
+      "brand": "Example Dairy",
+      "name": "2% Milk",
+      "size": "2 L",
+      "price": 4.99,
+      "available": true
+    },
+    {
+      "id": "EXAMPLE-OAT-1L",
+      "brand": "Grove",
+      "name": "Oat Milk",
+      "size": "1 L",
+      "price": 4.49,
+      "available": true
+    }
+  ],
+  "ground beef": [
+    {
+      "id": "EXAMPLE-BEEF-454",
+      "brand": "Example Farm",
+      "name": "Lean Ground Beef",
+      "size": "454 g",
+      "price": 7.49,
+      "available": true
+    },
+    {
+      "id": "EXAMPLE-TURKEY-500",
+      "brand": "Example Farm",
+      "name": "Ground Turkey",
+      "size": "500 g",
+      "price": 8.29,
+      "available": true
+    }
+  ]
+}

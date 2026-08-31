@@ -126,7 +126,9 @@ There is no checkout tool. Search subagents may use the read-only tools
 only. They must never call `add_to_cart` or `remove_from_cart`.
 
 The parent uses past-order search for brand/size hints, then passes those
-hints to the scout. Only the parent writes the cart after confirmation.
+hints to the scout and ranks picks with
+[product-resolution.md](product-resolution.md). Only the parent writes
+the cart after confirmation. Search and resolve never call cart tools.
 
 ## Product codes
 
