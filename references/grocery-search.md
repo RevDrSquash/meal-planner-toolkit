@@ -18,7 +18,10 @@ in a subagent or isolated turn. Pass:
 - relevant preferences (budget, brands, diet)
 - any known mappings from `shopping/product-mappings.md`
 
-The parent chooses from shortlists. The searcher must not write the cart.
+The parent chooses from shortlists, then builds a proposed cart with
+[cart.md](cart.md). The searcher must not write the cart or approve
+mutations. Search remains useful when the provider has no cart-write
+capability.
 
 ## Without a provider
 

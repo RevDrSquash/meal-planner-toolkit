@@ -1,0 +1,12 @@
+{
+  "capabilities": {
+    "search": true,
+    "details": true,
+    "view_cart": true,
+    "cart_write": true
+  },
+  "fail": {
+    "EXAMPLE-EGG-12": "out of stock"
+  },
+  "cart": []
+}

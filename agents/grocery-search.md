@@ -26,7 +26,9 @@ parent said the household is out.
    unit price, and sale flags when the user prefers deals.
 4. If nothing suitable is found, say so and suggest the closest substitute.
 
-Read-only tools only. Never add or remove cart items. Never edit files.
+Read-only tools only. Never add or remove cart items. Never approve a
+proposed cart. Never edit files. Cart mutation stays in the parent
+after [references/cart.md](../references/cart.md).
 If the provider tools are missing or return auth errors, fall back to
 workspace mappings — do not assume search works without login.
 

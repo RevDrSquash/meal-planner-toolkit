@@ -37,6 +37,7 @@ from pcexpress import (  # noqa: E402
     missing_workspace_gitignore_patterns,
     parse_cli,
     plan_serve,
+    provider_capabilities,
     serve,
     tool_side_effect,
     tools_declared_in_server_source,
@@ -74,6 +75,11 @@ class PinAndCatalogTests(unittest.TestCase):
             self.assertEqual(tool_side_effect(name), "write")
         with self.assertRaises(KeyError):
             tool_side_effect("checkout")
+        caps = provider_capabilities()
+        self.assertTrue(caps.cart_write)
+        self.assertTrue(caps.search)
+        self.assertFalse(caps.checkout)
+        self.assertFalse(caps.has("checkout"))
 
     def test_search_products_is_authenticated(self) -> None:
         """Open question from DEF-60: search is no longer an unauthenticated path.

@@ -16,6 +16,15 @@ A provider integration may expose some or all of:
 | add/remove cart | Build an order | write — needs user confirmation |
 | checkout | Place an order | **out of scope** — never implement |
 
+Search without `add/remove cart` is a valid V2 configuration. Product
+resolution and a proposed cart still work; the user shops from the file.
+Ask `python scripts/cart.py capabilities --adapter <name>` (or
+`python scripts/provider.py --adapter <name>`) before offering a fill.
+
+Cart mutation is a **separate** step from search. See
+[cart.md](cart.md): propose locally, show substitutions / waste /
+omissions, get an explicit yes, then write. Checkout stays manual.
+
 ## Input
 
 Resolve the retailer-independent shopping-list artifact produced by
@@ -27,7 +36,7 @@ product identifiers that are not already in workspace
 ## Rules for every adapter
 
 - Cart writes stay in the parent conversation, after the user confirms the
-  plan, pantry check, and excess flags.
+  plan, pantry check, excess flags, and the [proposed cart](cart.md).
 - Search-only work may be delegated to a grocery-search subagent.
 - Persist successful product identities in the workspace
   `shopping/product-mappings.md` (and `pantry.md` when the user wants a

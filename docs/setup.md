@@ -73,7 +73,11 @@ python .agents/skills/meal-planner-toolkit/scripts/shopping_list.py plan.json \
 ```
 
 The shopping-list script does not need a grocery provider. See
-[references/shopping-list.md](../references/shopping-list.md).
+[references/shopping-list.md](../references/shopping-list.md). After
+products are resolved, `scripts/cart.py propose` builds a reviewable
+cart; mutations wait for approval
+([references/cart.md](../references/cart.md)). Search still works when
+the provider cannot write a cart.
 
 Agents can also copy `templates/recipe-template.html` into the workspace
 `recipes/` directory and fill it in directly.
