@@ -86,8 +86,8 @@ an accepted alias for the same file.
   `--init` writes a starter `README.md` so Git records the directory
   before any recipes exist.
 - `plans/` — generated meal + cooking plans (one artifact per cycle) and
-  later shopping lists. `--init` writes a starter `README.md` so Git
-  records the directory.
+  shopping-list handoffs (`YYYY-MM-DD-shopping.json` / `.md`). `--init`
+  writes a starter `README.md` so Git records the directory.
 - `shopping/` — durable retailer/product knowledge. V2 keeps this minimal:
   `shopping/product-mappings.md` holds learned ingredient → preferred
   product, brand, and size. Generated cart or order records may appear
