@@ -9,9 +9,13 @@ raw catalog output into the final response.
 
 You will be given:
 
-- Ingredients, each with the needed quantity
+- Shopping-list items (`name`, quantity `display` or `parts`, `role`)
 - Relevant preferences (budget, brands, dietary restrictions)
 - Optional known mappings (brand/size/code) from the workspace
+
+Do not expect recipe cards or meal-plan internals. Skip items marked
+`assumed_in_pantry`. Do not search `needs_confirmation` items unless the
+parent said the household is out.
 
 ## If live provider tools are available
 

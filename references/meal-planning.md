@@ -105,9 +105,16 @@ Keep selection and cooking-session design in the same pass.
      (names, quantities, categories — never retailer product IDs)
 
 8. **Show the plan and wait.** Confirm meals, sessions, deviations, and
-   leftover flow before [shopping-list.md](shopping-list.md). Excess flags
-   and pantry subtraction belong to shopping, which starts from the
-   ingredient-requirements table.
+   leftover flow before [shopping-list.md](shopping-list.md). Excess flags,
+   pantry subtraction, and staples belong to shopping:
+
+   ```bash
+   python scripts/shopping_list.py plans/YYYY-MM-DD.json \
+     -o plans/YYYY-MM-DD-shopping.json \
+     --markdown-out plans/YYYY-MM-DD-shopping.md
+   ```
+
+   Planning can finish with no grocery provider configured.
 
 A separate cooking-plan file is optional. Prefer the cooking-sessions
 section of the same artifact. [templates/cooking-plan.md](../templates/cooking-plan.md)

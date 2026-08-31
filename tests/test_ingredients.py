@@ -16,6 +16,7 @@ from ingredients import (  # noqa: E402
     categorize_ingredient,
     display_quantity,
     format_amount,
+    infer_role,
     normalize_name,
     overlap_score,
     parse_ingredient_qty,
@@ -151,6 +152,8 @@ class AggregationTests(unittest.TestCase):
         self.assertAlmostEqual(beef[0]["amount"] or 0, 500 + 453.6, places=1)
         self.assertEqual(beef[0]["unit"], "g")
         self.assertEqual(beef[0]["category"], "proteins")
+        self.assertEqual(beef[0]["quantity_status"], "approximate")
+        self.assertEqual(beef[0]["role"], "essential")
 
     def test_unquantified_lines_are_kept(self) -> None:
         merged = aggregate_ingredients(["salt to taste", "1 onion"])
@@ -172,6 +175,14 @@ class ReplacementAndOverlapTests(unittest.TestCase):
         self.assertEqual(line, "500 g ground turkey")
         qty = parse_ingredient_qty(line)
         self.assertEqual(categorize_ingredient(qty), "proteins")
+
+    def test_infer_optional_and_garnish_roles(self) -> None:
+        garnish = parse_ingredient_qty("cilantro for garnish")
+        self.assertEqual(infer_role(garnish), "garnish")
+        optional = parse_ingredient_qty("sour cream, optional")
+        self.assertEqual(infer_role(optional), "optional")
+        core = parse_ingredient_qty("500 g ground beef")
+        self.assertEqual(infer_role(core), "essential")
 
     def test_shared_ingredients_ignore_spices(self) -> None:
         chili = [

@@ -77,9 +77,12 @@ Write generated plans only under the workspace `plans/` path. A V2 plan is
 one markdown file with the meal schedule, cooking sessions, deviations,
 nutrition, and normalized ingredient requirements (never product IDs).
 Helpers: `python scripts/meal_plan.py eligible`, `scale`, `aggregate`,
-and `render`. Write learned product mappings only under the workspace
-`shopping/` path. Update `preferences.md`, `staples.md`, `pantry.md`, and
-`tools.md` only when the user says the change is lasting.
+and `render`. After the plan is confirmed, build the retailer-independent
+shopping list with `python scripts/shopping_list.py plan.json` (pantry +
+staples; no grocery MCP required). Write learned product mappings only
+under the workspace `shopping/` path. Update `preferences.md`,
+`staples.md`, `pantry.md`, and `tools.md` only when the user says the
+change is lasting.
 
 ## 4. Hard rules
 

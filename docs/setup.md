@@ -67,7 +67,13 @@ python .agents/skills/meal-planner-toolkit/scripts/meal_plan.py scale \
   --from-servings 4 --to-servings 2 "500 g ground beef"
 python .agents/skills/meal-planner-toolkit/scripts/meal_plan.py render plan.json \
   -o plans/YYYY-MM-DD.md
+python .agents/skills/meal-planner-toolkit/scripts/shopping_list.py plan.json \
+  -o plans/YYYY-MM-DD-shopping.json \
+  --markdown-out plans/YYYY-MM-DD-shopping.md
 ```
+
+The shopping-list script does not need a grocery provider. See
+[references/shopping-list.md](../references/shopping-list.md).
 
 Agents can also copy `templates/recipe-template.html` into the workspace
 `recipes/` directory and fill it in directly.

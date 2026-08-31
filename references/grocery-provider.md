@@ -16,6 +16,14 @@ A provider integration may expose some or all of:
 | add/remove cart | Build an order | write — needs user confirmation |
 | checkout | Place an order | **out of scope** — never implement |
 
+## Input
+
+Resolve the retailer-independent shopping-list artifact produced by
+[shopping-list.md](shopping-list.md) (`name`, quantity, notes). Do not
+require meal-plan JSON, recipe cards, or pantry markdown. Ignore any
+product identifiers that are not already in workspace
+`shopping/product-mappings.md`.
+
 ## Rules for every adapter
 
 - Cart writes stay in the parent conversation, after the user confirms the

@@ -1,50 +1,84 @@
 # Shopping-list generation
 
-Derive the to-buy list from a confirmed (or draft) meal plan plus staples.
+The shopping list is the handoff between meal planning and grocery
+providers. Planning finishes without a store integration. Shopping starts
+from the plan's ingredient requirements, then adds staples and pantry
+checks. The result is a retailer-independent list a human can take to any
+store, and a grocery adapter can consume without meal-plan internals.
 
-The plan's **Ingredient requirements** table is the input: normalized
-names and quantities after servings and deviations. It is not a store
-catalog. Do not treat those rows as retailer product IDs.
+Do not put PC Express (or any other store) product IDs on this list.
+
+## Intermediate representation
+
+`scripts/shopping_list.py` writes a JSON artifact (`kind: shopping-list`)
+and a human-readable markdown sibling. The JSON is the contract for
+grocery search. Keep it small:
+
+| Field | Meaning |
+|---|---|
+| `name` | Canonical ingredient name |
+| `display` / `amount` / `unit` | Required quantity when known |
+| `quantity_status` | `exact`, `approximate` (unit conversion), or `uncertain` |
+| `parts` | Present only when amounts could not be combined |
+| `role` | `essential`, `optional`, or `garnish` when known |
+| `sources` | Recipe names that need this item |
+| `pantry_status` | `buy`, `assumed_in_pantry`, or `needs_confirmation` |
+| `origin` | `recipe` or `staple` |
+| `substitutions` | Explicit planning swaps (`from` → `to`) |
+| `notes` | Staple restock hints, temporary "we're out", etc. |
+
+`quantity_status: uncertain` means "do not invent a single number." A
+provider should search from `name` + `display` (and `parts` when present).
+
+Forbidden on this artifact: `code`, `product_id`, `sku`, `upc`, `price`,
+and any PC Express / offer identifiers.
 
 ## Inputs
 
-- The plan in workspace `plans/` — start from Ingredient requirements
-- `pantry.md` — exclude these unless the user is out
-- `staples.md` — add recurring items that are due
-- `shopping/product-mappings.md` — preferred brand/size/code when present
+- The plan JSON from `scripts/meal_plan.py` (ingredient requirements
+  already scaled, aggregated, leftover meals excluded, deviations applied)
+- `pantry.md` — assumed on-hand stock
+- `staples.md` — recurring items added here, not baked into recipes
+- Temporary "we're out" / "please confirm" overrides for this order only
+- `shopping/product-mappings.md` — brand/size hints **after** the list
+  exists, during [grocery-search.md](grocery-search.md)
 
 ## Procedure
 
-1. Take the plan's ingredient requirements (already scaled, aggregated,
-   and after recorded deviations). Add requested staples. Leftover /
-   reheat meals on the schedule are already excluded from that table.
-2. Subtract pantry stock. Temporary "we're out" overrides apply to this
-   list only unless the user asks to edit `pantry.md`.
-3. Group items in a way that is easy to shop (produce, proteins,
-   dairy/eggs, pantry, frozen, other). The requirement `category` column
-   is a starting point.
-4. Write a sibling file using
-   [templates/shopping-list.md](../templates/shopping-list.md) (or update
-   a shopping section). Do not put product codes back onto the meal plan.
-5. If a grocery provider is configured, resolve products and prices via
-   [grocery-search.md](grocery-search.md). Otherwise leave product/price
-   columns blank for the user.
-6. Include a nutrition summary only when the user asked. The meal plan
-   already copies card macros when present; use
-   [templates/nutrition-summary.md](../templates/nutrition-summary.md)
-   if they want a standalone copy.
+1. Confirm the meal plan first ([meal-planning.md](meal-planning.md)).
+2. Build the shopping list (no grocery MCP required):
 
-## Excess flags
+   ```bash
+   python scripts/shopping_list.py plans/YYYY-MM-DD.json \
+     --pantry pantry.md --staples staples.md \
+     -o plans/YYYY-MM-DD-shopping.json \
+     --markdown-out plans/YYYY-MM-DD-shopping.md
+   ```
 
-Stores often sell a size far larger than the recipe needs. Flag it; never
-quietly add the oversized product.
+   Workspace `pantry.md` and `staples.md` are used when those flags are
+   omitted. Repeat `--pantry-out "soy sauce"` for this-order overrides.
+3. Review the markdown with the user: to-buy, confirm-before-skipping,
+   assumed pantry stock, uncertain quantities, and recorded substitutions.
+4. If a grocery provider is configured, resolve **to-buy** items via
+   [grocery-search.md](grocery-search.md). Leave
+   `needs_confirmation` items unresolved until the user says they are
+   actually out. Do not write product codes back onto the meal plan.
+5. Excess flags (shoppable size far larger than needed) belong after
+   product search, not in this intermediate list.
 
-For each flagged item:
+## Pantry and staple rules
 
-- quantity the plan actually needs (from ingredient requirements)
-- smallest shoppable option and how much excess that leaves
-- perishable waste vs carries over (shelf-stable / freezable)
-- for anything not core (garnish, optional topping), offer to skip it
+- A clearly listed pantry item is `assumed_in_pantry` — show it on the
+  pantry check, do not add it to to-buy.
+- "When low" / "when below" / other uncertain wording is
+  `needs_confirmation`. Do not silently skip or silently buy.
+- Temporary "we're out" forces `buy` for this list only. Edit `pantry.md`
+  only when the user says the change is lasting.
+- Staples are attached at this step. A staple that matches a recipe item
+  becomes a note on that row. A staple that is not in the recipes is a
+  new row (`origin: staple`).
+- Generic pantry "cooking oil" covers olive / vegetable / canola oil, not
+  sesame or coconut oil.
 
 ## Learned mappings
 

@@ -2,6 +2,9 @@
 
 Source plan: `plans/YYYY-MM-DD.md`
 
+Retailer-independent. Product IDs and prices belong to grocery search,
+not this list.
+
 ## To buy
 
 ### Produce
@@ -28,10 +31,24 @@ Source plan: `plans/YYYY-MM-DD.md`
 
 - 
 
+## Confirm before skipping
+
+- 
+
 ## Assumed pantry stock
 
 - 
 
+## Uncertain quantities
+
+- 
+
+## Substitutions from planning
+
+- 
+
 ## Excess flags
+
+Fill after grocery search if a shoppable size is much larger than needed.
 
 - 
