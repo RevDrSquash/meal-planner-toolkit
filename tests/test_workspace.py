@@ -77,9 +77,13 @@ class WorkspaceDiscoveryTests(unittest.TestCase):
 
 class OnboardingDetectionTests(unittest.TestCase):
     def test_uninitialized_fixture_is_not_ready(self) -> None:
+        # Deliberately does not assert find_workspace_root() raises here.
+        # That function answers "which workspace encloses this path", not
+        # "is this path a workspace", so once the toolkit is vendored into a
+        # real workspace the walk up from this fixture finds the enclosing
+        # workspace.yaml and returns it. test_missing_workspace_raises covers
+        # the raising behaviour from a temp dir with no workspace above it.
         self.assertTrue(UNINITIALIZED_FIXTURE.is_dir())
-        with self.assertRaises(WorkspaceNotFoundError):
-            find_workspace_root(UNINITIALIZED_FIXTURE)
         self.assertFalse(onboarding_complete(UNINITIALIZED_FIXTURE))
         self.assertFalse(workspace_initialized(UNINITIALIZED_FIXTURE))
 
