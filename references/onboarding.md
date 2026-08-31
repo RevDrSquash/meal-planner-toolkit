@@ -30,8 +30,8 @@ These must exist in the workspace root after onboarding:
 1. `workspace.yaml` — copy [templates/workspace.yaml](../templates/workspace.yaml)
 2. `preferences.md` — filled from the interview, starting at
    [templates/preferences.md](../templates/preferences.md)
-3. `staples.md` — [templates/staples.md](../templates/staples.md)
-   defaults, as edited in the confirmation step below
+3. `staples.md` — [templates/staples.md](../templates/staples.md),
+   left empty unless the user named regular purchases unprompted
 4. `pantry.md` — [templates/pantry.md](../templates/pantry.md)
    defaults, as edited in the confirmation step below
 5. `tools.md` — [templates/tools.md](../templates/tools.md); keep the
@@ -75,9 +75,14 @@ in `tools.md`.
 
 ## Confirm the defaults
 
-`pantry.md`, `staples.md`, and `tools.md` ship with sensible defaults
-rather than empty lists. Show them once, in one message, and ask a single
-question: anything to strike or add?
+`pantry.md` and `tools.md` ship with sensible defaults rather than empty
+lists. Show them once, in one message, and ask a single question: anything
+to strike or add?
+
+`staples.md` is not part of that step. It starts empty and stays empty
+unless the user names something they buy on a schedule. Do not offer
+suggestions to react to — most households planning specific meals never
+need the file, and a guessed staple gets bought every single order.
 
 This is one exchange, not an inventory. Do not walk the user through the
 list item by item, and do not ask again later — corrections arrive during
@@ -90,12 +95,13 @@ only finds out at review time. One question up front is cheaper than that
 correction, and cheaper than letting the file accumulate over several
 weeks of wrong lists.
 
-Bias the two lists in opposite directions:
+Keep anything doubtful out of both files, for different reasons:
 
 - `pantry.md` suppresses buying. A wrong entry means a missing ingredient
-  at the stove, so strike anything the user is unsure about.
-- `staples.md` causes buying. A wrong entry costs a few dollars and is
-  visible on the list before checkout, so it can stay if they are unsure.
+  discovered at the stove, so strike anything the user is unsure about.
+- `staples.md` causes buying, on every order, indefinitely. Only list what
+  the user explicitly said they restock. It exists so they can expand into
+  standing groceries later, not to be populated up front.
 
 ## Optional provider setup
 

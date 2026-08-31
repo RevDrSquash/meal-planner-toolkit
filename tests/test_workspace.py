@@ -396,11 +396,26 @@ class TemplateDefaultTests(unittest.TestCase):
         for item in ("Salt", "Black pepper", "Cooking oil"):
             self.assertIn(item, text)
 
-    def test_staples_template_ships_some_defaults(self) -> None:
+    def test_staples_template_ships_empty(self) -> None:
+        """Deliberate: a guessed staple gets bought on every order."""
         text = (toolkit_root() / "templates" / "staples.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Eggs", text)
+        headings = [line for line in text.splitlines() if line.startswith("## ")]
+        self.assertTrue(headings)
+        entries = [
+            line
+            for line in text.splitlines()
+            if line.startswith("- ") and line.strip() != "-"
+        ]
+        self.assertEqual(entries, [], f"staples.md must ship empty, found: {entries}")
+
+    def test_pantry_template_has_a_home_for_canned_goods(self) -> None:
+        """Without this category, canned items land under Dry goods."""
+        text = (toolkit_root() / "templates" / "pantry.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("## Canned and jarred", text)
 
     def test_init_writes_populated_pantry(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

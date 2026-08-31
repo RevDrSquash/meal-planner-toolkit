@@ -31,6 +31,10 @@ so strike anything you are unsure about.
 - All-purpose flour
 - Sugar
 
+## Canned and jarred
+
+- 
+
 ## Seasonings
 
 - Salt

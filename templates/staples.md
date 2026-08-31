@@ -6,10 +6,13 @@ these to a shopping list even when they are not in this week's recipes.
 Staples are things you **buy on a schedule**. Compare `pantry.md`, which
 is things you **already have** and should not be billed for.
 
-**The list below is a starting guess.** Onboarding shows it to you once
-and asks what to strike or add. These are far more household-specific than
-pantry basics — diet, allergies, and who you are feeding all change them —
-so expect to edit this more than `pantry.md`.
+**This file starts empty on purpose.** Unlike `pantry.md`, there is no
+sensible default here — what a household restocks depends entirely on
+diet, who is being fed, and how they shop. Most people start out using
+meal planning for specific plans and never need this file at all.
+
+Add an item only when you have said you buy it regularly. Anything listed
+here gets bought whether or not a recipe calls for it.
 
 ## Produce
 
@@ -21,9 +24,8 @@ so expect to edit this more than `pantry.md`.
 
 ## Dairy and eggs
 
-- Eggs
-- Milk
+- 
 
 ## Pantry
 
-- Coffee or tea
+- 
