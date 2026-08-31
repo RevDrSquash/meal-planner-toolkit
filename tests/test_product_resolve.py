@@ -139,7 +139,11 @@ class MappingParseAndUpdateTests(unittest.TestCase):
 
     def test_upsert_does_not_invent_product_id(self) -> None:
         text = upsert_mapping("", _mapping(product_id=None, brand="House"))
-        self.assertNotIn("`", text)
+        soy = lookup_mapping(parse_mappings(text), "soy sauce")
+        self.assertIsNotNone(soy)
+        assert soy is not None
+        self.assertIsNone(soy.product_id)
+        self.assertNotIn("`", format_mapping_line(soy))
         self.assertIn("House", text)
 
     def test_upsert_rejects_invalid_id(self) -> None:
@@ -306,7 +310,7 @@ class RankingAndSelectionTests(unittest.TestCase):
         )
         ranked = rank_candidates(
             [known, cheaper],
-            "2 tbsp soy sauce",
+            "500 ml soy sauce",
             mapping=mapping,
             category="pantry",
             prefs={"prefer_deals": True},
@@ -316,7 +320,7 @@ class RankingAndSelectionTests(unittest.TestCase):
         other = next(item for item in ranked if item.candidate.product_id == "EXAMPLE-SOY-SALE")
         self.assertTrue(is_materially_better(other, mapped))
         resolved = resolve_requirement(
-            "2 tbsp soy sauce",
+            "500 ml soy sauce",
             [mapping],
             [known, cheaper],
         )

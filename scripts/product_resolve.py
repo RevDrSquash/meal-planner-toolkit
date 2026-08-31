@@ -620,7 +620,12 @@ def is_materially_better(
     inc_price = incumbent.candidate.unit_price
     ch_price = challenger.candidate.unit_price
     if inc_price and ch_price and ch_price <= inc_price * UNIT_PRICE_BETTER_RATIO:
-        if _excess_rank(ch_ex) <= _excess_rank(inc_ex):
+        # A cheaper warehouse jug is not a reason to drop a learned staple size.
+        ch_rank = _excess_rank(ch_ex)
+        inc_rank = _excess_rank(inc_ex)
+        if ch_rank < inc_rank:
+            return True
+        if ch_rank <= 1 and inc_rank <= 1:
             return True
     return False
 
@@ -738,6 +743,7 @@ def normalize_requirement(row: dict | str) -> dict:
             "category": categorize_ingredient(qty),
             "notes": qty.notes,
             "line": row,
+            "_qty": qty,
         }
     if not isinstance(row, dict):
         raise ProductResolveError("each requirement must be a string or object")
