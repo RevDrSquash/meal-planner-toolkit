@@ -172,6 +172,7 @@ class EnvAndConfigTests(unittest.TestCase):
             "PCEXPRESS_STORE_ID": "0545",
             "PCEXPRESS_BEARER_TOKEN": "eyJ-old-style",
             "PCEXPRESS_CUSTOMER_ID": "not-a-real-customer",
+            "PCEXPRESS_CART_ID": "not-a-real-cart",
         }
         with tempfile.TemporaryDirectory() as raw:
             root = self._workspace(Path(raw), vendor=True, env=env)

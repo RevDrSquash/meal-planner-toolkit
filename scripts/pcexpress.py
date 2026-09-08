@@ -55,14 +55,15 @@ REQUIRED_ENV = (
 )
 OPTIONAL_ENV = (
     "PCEXPRESS_STATE_DIR",
-    "PCEXPRESS_CART_ID",
     "PCEXPRESS_CLIENT_SECRET",
 )
-# Removed by current upstream; leftover keys mean the workspace is still on
-# the old HAR / bearer-token bootstrap.
+# Leftover keys from the old HAR / bearer-token bootstrap. Current upstream
+# discovers customer id and cart id from the profile at runtime (and
+# re-discovers the cart on 404), so a pinned cart id only goes stale.
 OBSOLETE_ENV = (
     "PCEXPRESS_BEARER_TOKEN",
     "PCEXPRESS_CUSTOMER_ID",
+    "PCEXPRESS_CART_ID",
 )
 # Patterns a *workspace-root* .gitignore must include. The toolkit
 # .gitignore does not apply to the parent repository.
