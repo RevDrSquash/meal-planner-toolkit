@@ -59,7 +59,7 @@ if needed, then route to the matching file under `references/`.
 SKILL.md                 # orchestrator
 agents/                  # subagent instructions (host-neutral)
 references/              # workflows and contracts
-scripts/                 # workspace locator/init, import, recipe finder, meal plan, shopping list, product resolve, cart proposal, optional PC Express
+scripts/                 # workspace locator/init, import, recipe finder, meal plan, shopping list, product resolve, cart proposal, optional PC Express (+ headed login)
 templates/               # empty/skeleton user files and plan formats
 examples/workspace/      # synthetic household for docs/tests
 tests/                   # synthetic fixtures only

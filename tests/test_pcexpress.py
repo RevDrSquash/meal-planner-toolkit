@@ -385,6 +385,7 @@ class ExampleAndTemplateTests(unittest.TestCase):
         self.assertFalse((scripts / "run_server.py").exists())
         self.assertFalse((scripts / "refresh_token.py").exists())
         self.assertTrue((scripts / "pcexpress.py").is_file())
+        self.assertTrue((scripts / "pcexpress_login.py").is_file())
 
     def test_requirements_do_not_pull_playwright(self) -> None:
         text = (ROOT / "requirements.txt").read_text(encoding="utf-8")

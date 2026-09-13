@@ -2,9 +2,10 @@
 """Meal Planner configuration for a workspace-vendored PC Express MCP server.
 
 Auth, token refresh, and the MCP tools themselves live in the reviewed
-upstream project (FireBall1725/pcexpress-mcp-server). This module only
-records the pin, the tool surface, and how a private workspace should
-launch that server. It does not capture credentials or drive a browser.
+upstream project (FireBall1725/pcexpress-mcp-server). This module records
+the pin, the tool surface, and how a private workspace should launch that
+server. One-time browser login is `pcexpress_login.py`; this module does
+not capture credentials or drive a browser.
 """
 
 from __future__ import annotations

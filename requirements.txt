@@ -1,4 +1,5 @@
 # Recipe import/conversion: stdlib only.
 # Optional PC Express: install the *vendored server* requirements in the
-# private workspace (vendor/pcexpress-mcp-server/requirements.txt). This
-# toolkit no longer ships Playwright or token-refresh helpers.
+# private workspace (vendor/pcexpress-mcp-server/requirements.txt).
+# Headed one-time login (scripts/pcexpress_login.py) additionally needs
+# Playwright + Chromium; scripts/pcexpress.py --serve does not.
