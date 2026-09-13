@@ -172,6 +172,7 @@ class EnvAndConfigTests(unittest.TestCase):
             "PCEXPRESS_STORE_ID": "0545",
             "PCEXPRESS_BEARER_TOKEN": "eyJ-old-style",
             "PCEXPRESS_CUSTOMER_ID": "not-a-real-customer",
+            "PCEXPRESS_CART_ID": "not-a-real-cart",
         }
         with tempfile.TemporaryDirectory() as raw:
             root = self._workspace(Path(raw), vendor=True, env=env)
@@ -384,6 +385,7 @@ class ExampleAndTemplateTests(unittest.TestCase):
         self.assertFalse((scripts / "run_server.py").exists())
         self.assertFalse((scripts / "refresh_token.py").exists())
         self.assertTrue((scripts / "pcexpress.py").is_file())
+        self.assertTrue((scripts / "pcexpress_login.py").is_file())
 
     def test_requirements_do_not_pull_playwright(self) -> None:
         text = (ROOT / "requirements.txt").read_text(encoding="utf-8")

@@ -2,9 +2,10 @@
 """Meal Planner configuration for a workspace-vendored PC Express MCP server.
 
 Auth, token refresh, and the MCP tools themselves live in the reviewed
-upstream project (FireBall1725/pcexpress-mcp-server). This module only
-records the pin, the tool surface, and how a private workspace should
-launch that server. It does not capture credentials or drive a browser.
+upstream project (FireBall1725/pcexpress-mcp-server). This module records
+the pin, the tool surface, and how a private workspace should launch that
+server. One-time browser login is `pcexpress_login.py`; this module does
+not capture credentials or drive a browser.
 """
 
 from __future__ import annotations
@@ -55,14 +56,15 @@ REQUIRED_ENV = (
 )
 OPTIONAL_ENV = (
     "PCEXPRESS_STATE_DIR",
-    "PCEXPRESS_CART_ID",
     "PCEXPRESS_CLIENT_SECRET",
 )
-# Removed by current upstream; leftover keys mean the workspace is still on
-# the old HAR / bearer-token bootstrap.
+# Leftover keys from the old HAR / bearer-token bootstrap. Current upstream
+# discovers customer id and cart id from the profile at runtime (and
+# re-discovers the cart on 404), so a pinned cart id only goes stale.
 OBSOLETE_ENV = (
     "PCEXPRESS_BEARER_TOKEN",
     "PCEXPRESS_CUSTOMER_ID",
+    "PCEXPRESS_CART_ID",
 )
 # Patterns a *workspace-root* .gitignore must include. The toolkit
 # .gitignore does not apply to the parent repository.

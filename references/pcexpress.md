@@ -9,10 +9,10 @@ whether tools such as `search_products` are actually available. Do not
 assume product search is unauthenticated — current upstream requires a
 logged-in PC id session for every tool, including search.
 
-This toolkit does not vendor or fork the server. Auth, token refresh,
-cart-id discovery, and the MCP tools live upstream. The toolkit only
-records a reviewed pin and a thin workspace launcher
-(`scripts/pcexpress.py`).
+This toolkit does not vendor or fork the server. Token refresh, cart-id
+discovery, and the MCP tools live upstream. The toolkit records a reviewed
+pin, a thin workspace launcher (`scripts/pcexpress.py`), and an optional
+headed one-time login helper (`scripts/pcexpress_login.py`).
 
 ## Reviewed pin
 
@@ -26,9 +26,10 @@ Re-review the upstream diff before bumping this value.
 
 That commit includes the OAuth refresh-token flow (`login_pcid.py` /
 `TokenManager`), token-authenticated `POST /products/search` (the old
-Next.js `buildId` scrape is gone), and cart-id rediscovery on 404. The
-toolkit no longer ships Playwright login wrappers, HAR extractors, or a
-`_get_build_id` monkey-patch.
+Next.js `buildId` scrape is gone), and cart-id rediscovery on 404. This
+toolkit ships a headed login wrapper that captures the OAuth redirect
+without URL pasting; HAR extractors and token-refresh helpers stay
+removed.
 
 Print the same pin from any directory inside a workspace:
 
@@ -69,21 +70,25 @@ All of this happens in the **private workspace**, not in this toolkit.
    --serve` appends any missing required entries (`.env` and the state
    directory) before launching.
 
-4. One-time login, using upstream's wizard (browser required). From the
-   vendor directory:
+4. One-time login (browser required). Preferred: the toolkit headed helper
+   (Playwright is an optional install — not in toolkit `requirements.txt`):
 
    ```bash
-   python setup.py
+   pip install playwright && python -m playwright install chromium
+   python .agents/skills/meal-planner-toolkit/scripts/pcexpress_login.py
    ```
 
-   Or the manual helper: `python login_pcid.py`. After you sign in, the
-   browser tries to open a `com.loblaw.pcx://...` link and shows an
-   error — that is expected. Paste the full address back into the
-   script. Put the printed `PCEXPRESS_REFRESH_TOKEN` into the workspace
-   `.env`.
+   Sign in in the visible window (2FA is fine). The script captures the
+   OAuth redirect, writes `PCEXPRESS_REFRESH_TOKEN` into the workspace
+   `.env`, seeds `.pcexpress-mcp/pcid_token_state.json`, and may derive
+   `PCEXPRESS_STORE_ID` from your account when it is still a placeholder.
 
-   If `setup.py` wrote `vendor/pcexpress-mcp-server/.env`, copy the
-   refresh token into the **workspace** `.env` and keep using that file.
+   Fallback (paste-based): from the vendor directory, `python setup.py`
+   or `python login_pcid.py`. After sign-in the browser may show a
+   `com.loblaw.pcx://...` error — that is expected. Paste the full
+   redirect URL into the script and copy the printed refresh token into
+   the **workspace** `.env`.
+
    Customer id and cart id are discovered at runtime; do not store them
    in markdown.
 
@@ -161,8 +166,9 @@ access tokens over HTTPS and persists the rotated refresh token in
 `PCEXPRESS_STATE_DIR`. The server never opens a browser.
 
 Refresh tokens are single-use. Run **one** MCP server instance per token
-chain. If tools return `invalid_grant` or ask you to re-run
-`login_pcid.py`, repeat the one-time login and update workspace `.env`.
+chain. If tools return `invalid_grant` or ask you to re-run login, repeat the
+one-time login (`scripts/pcexpress_login.py` or upstream `login_pcid.py`)
+and update workspace `.env`.
 
 Do not keep leftover `PCEXPRESS_BEARER_TOKEN` or `PCEXPRESS_CUSTOMER_ID`
 values; current upstream does not use them.

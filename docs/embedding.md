@@ -20,8 +20,9 @@ Do not relocate user data into this package to make a host "see" files.
 ## What the workspace owns
 
 Preferences, staples, pantry, kitchen-tool notes, recipes, plans, shopping
-mappings, `.env`, PC Express token state (`.pcexpress-mcp/`), and MCP
-config. Ignore `.env` and `.pcexpress-mcp/` in the workspace `.gitignore`
+mappings, `.env`, PC Express token state (`.pcexpress-mcp/`), browser
+profile (`.browser-profile/`), and MCP config. Ignore `.env`,
+`.pcexpress-mcp/`, and `.browser-profile/` in the workspace `.gitignore`
 (see `templates/gitignore.example`); this package's `.gitignore` does not
 apply to the parent repo. Updating this submodule must not overwrite
 those files. The default layout is in

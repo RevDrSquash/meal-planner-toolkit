@@ -104,7 +104,7 @@ with `remember` into the workspace `shopping/product-mappings.md` only.
 See `references/pcexpress.md`. In short: vendor the reviewed
 `FireBall1725/pcexpress-mcp-server` commit in the workspace, copy
 `templates/env.example` to `.env`, copy `templates/gitignore.example`
-into the workspace-root `.gitignore`, run the **upstream** one-time login
-(`python vendor/pcexpress-mcp-server/setup.py`), and point your agent
-host at `scripts/pcexpress.py --serve` using an example from
-`examples/mcp/`.
+into the workspace-root `.gitignore`, run the one-time login (see
+`references/pcexpress.md` — headed `scripts/pcexpress_login.py` or
+upstream paste-based helpers), and point your agent host at
+`scripts/pcexpress.py --serve` using an example from `examples/mcp/`.
