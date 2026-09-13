@@ -63,8 +63,12 @@ STORE_KEY = "PCEXPRESS_STORE_ID"
 BANNER_KEY = "PCEXPRESS_BANNER"
 # Same placeholder semantics as the toolkit's pcexpress.py --check.
 PLACEHOLDER_VALUES = ("", "your_store_id_here", "1234")
+# Where a store id may live inside the profile's `homeStore` field.
 STORE_ID_KEYS = ("storeId", "store_id", "id", "code", "storeNumber", "number")
+# Query parameters PCID uses to carry the app redirect on its interstitial page.
 WRAPPER_PARAMS = ("redirectURL", "redirectUrl", "redirect_url", "redirect_uri")
+# `.env` and the token state dir are covered by pcexpress.ensure_workspace_secret_gitignore;
+# the persistent browser profile is specific to this script.
 LOGIN_GITIGNORE_EXTRA = (".browser-profile/",)
 
 
@@ -142,7 +146,11 @@ def resolve_state_dir(workspace: Path, env_values: dict[str, str]) -> Path:
 
 
 def write_token_state(state_dir: Path, tokens: dict) -> Path:
-    """Seed the server's rotating-token state file with the fresh chain."""
+    """Seed the server's rotating-token state file with the fresh chain.
+
+    TokenManager prefers the refresh token in this file over the `.env` seed,
+    so leaving an old file behind would make the server ignore the new login.
+    """
     state_dir.mkdir(parents=True, exist_ok=True)
     path = state_dir / STATE_FILE
     payload = {
@@ -191,7 +199,13 @@ class AuthorizeError(RuntimeError):
 
 
 def code_from_url(url: str, depth: int = 0) -> tuple[str, str | None] | None:
-    """Return (code, state) if *url* carries an OAuth authorization response."""
+    """Return (code, state) if *url* carries an OAuth authorization response.
+
+    Handles the raw `com.loblaw.pcx://...?code=...` redirect, PCID's
+    `/login/success?redirectURL=<percent-encoded redirect>` interstitial (the
+    form that breaks upstream's paste-based helper), and double-encoding.
+    Raises AuthorizeError when the response carries `error=`.
+    """
     if not url or depth > 3:
         return None
     parsed = urllib.parse.urlsplit(url)
@@ -212,6 +226,7 @@ def code_from_url(url: str, depth: int = 0) -> tuple[str, str | None] | None:
             if found:
                 return found
 
+    # Fully percent-encoded URL pasted or forwarded as-is.
     if "%3F" in url.upper() and "code" not in query:
         return code_from_url(urllib.parse.unquote(url), depth + 1)
     return None
@@ -221,6 +236,13 @@ def code_from_url(url: str, depth: int = 0) -> tuple[str, str | None] | None:
 
 
 def store_id_from_home_store(home_store) -> str | None:
+    """Best-effort extraction of a 4-digit store id from the profile's `homeStore`.
+
+    Upstream documents that `homeStore` exists but not its shape, so accept a
+    bare id (str/int), a dict carrying one of STORE_ID_KEYS, or one level of
+    nesting. Return None when nothing looks like a store id; the caller then
+    prints the raw value so the real shape can be captured.
+    """
     if home_store is None or isinstance(home_store, bool):
         return None
     if isinstance(home_store, int):
@@ -243,19 +265,23 @@ def store_id_from_home_store(home_store) -> str | None:
 
 
 class _StaticTokens:
+    """Duck-typed TokenManager: hands upstream's API client one fixed access token."""
+
     def __init__(self, access_token: str):
         self._token = access_token
 
-    def get_access_token(self, force: bool = False) -> str:  # noqa: ARG002
+    def get_access_token(self, force: bool = False) -> str:  # noqa: ARG002 — upstream signature
         return self._token
 
 
 def make_api(access_token: str, banner: str, cart_id: str | None = None):
+    """Upstream's PCExpressAPI (same headers/API key as the server), one fixed token."""
     import pcexpress_mcp_server as server  # type: ignore[import-not-found]
 
     return server.PCExpressAPI(_StaticTokens(access_token), cart_id, "1234", banner)
 
 
+# Keys whose value *is* a store id (directly or via a small dict).
 CART_STORE_KEYS = {
     "storeid",
     "sellerid",
@@ -268,10 +294,12 @@ CART_STORE_KEYS = {
     "deliverystore",
     "fulfillmentstore",
 }
+# Keys that may hold a store id nested further down; still dumped in the skeleton.
 INTERESTING_KEY_PARTS = ("store", "seller")
 
 
 def find_store_ids(obj, path: str = "$") -> list[tuple[str, str]]:
+    """Walk any JSON value and return (json_path, store_id) for every store-like key."""
     hits: list[tuple[str, str]] = []
     if isinstance(obj, dict):
         for key, value in obj.items():
@@ -289,6 +317,11 @@ def find_store_ids(obj, path: str = "$") -> list[tuple[str, str]]:
 
 
 def skeleton(obj, depth: int = 0, max_depth: int = 8):
+    """Shape of a JSON value: key names and types, values only for store/seller keys.
+
+    Lets the user paste the structure back without leaking the delivery
+    address, phone number, or line-item contents that live in a cart.
+    """
     if depth >= max_depth:
         return "..."
     if isinstance(obj, dict):
@@ -309,6 +342,7 @@ def skeleton(obj, depth: int = 0, max_depth: int = 8):
 
 
 def _pick(hits: list[tuple[str, str]], source: str) -> str | None:
+    """Reduce store-id hits to one id; explain when they disagree."""
     if not hits:
         return None
     counts: dict[str, int] = {}
@@ -329,6 +363,12 @@ def _pick(hits: list[tuple[str, str]], source: str) -> str | None:
 
 
 def discover_store_id(tokens: dict, banner: str, dump_profile: bool = False) -> str | None:
+    """Derive the store id from the account, or return None after explaining why.
+
+    Order: profile `homeStore` (pickup accounts) -> profile `lastStoreId` ->
+    the active cart (delivery accounts: the fulfilling store lives on the cart).
+    Never raises: store discovery is a convenience, the login already succeeded.
+    """
     access_token = tokens.get("access_token")
     if not access_token:
         print("Store discovery skipped: token response had no access_token.", file=sys.stderr)
@@ -344,7 +384,7 @@ def discover_store_id(tokens: dict, banner: str, dump_profile: bool = False) -> 
         return None
     try:
         profile = api.get_customer()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 — surfaced, never fatal
         print(f"Store discovery skipped: profile request failed ({exc}).", file=sys.stderr)
         return None
 
@@ -361,6 +401,7 @@ def discover_store_id(tokens: dict, banner: str, dump_profile: bool = False) -> 
         print(json.dumps(profile, indent=2), file=sys.stderr)
         return None
 
+    # 1. homeStore (pickup accounts).
     home_store = profile.get("homeStore")
     if home_store is not None:
         sid = store_id_from_home_store(home_store)
@@ -374,11 +415,13 @@ def discover_store_id(tokens: dict, banner: str, dump_profile: bool = False) -> 
         )
         print(json.dumps(home_store, indent=2, sort_keys=True), file=sys.stderr)
 
+    # 2. lastStoreId (set once the account has shopped a store).
     sid = store_id_from_home_store(profile.get("lastStoreId"))
     if sid:
         print(f"Store discovery: profile lastStoreId -> store {sid}")
         return sid
 
+    # 3. The active cart (delivery accounts).
     cart_id = profile.get("cartId")
     if not cart_id:
         print(
@@ -389,7 +432,7 @@ def discover_store_id(tokens: dict, banner: str, dump_profile: bool = False) -> 
         return None
     try:
         cart = make_api(access_token, banner, cart_id).get_cart()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 — surfaced, never fatal
         print(f"Store discovery: cart request failed ({exc}).", file=sys.stderr)
         return None
 
@@ -451,6 +494,7 @@ def run_browser_login(
     fresh: bool,
     profile_dir: Path,
 ) -> str:
+    """Open a headed browser, let the user sign in, return the authorization code."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as exc:
@@ -473,6 +517,7 @@ def run_browser_login(
             found["code"], found["state"] = hit
 
     def on_response(response) -> None:
+        # A bare 302 to the custom scheme never renders a page; read Location.
         if 300 <= response.status < 400:
             consider(response.headers.get("location"))
 
@@ -506,7 +551,7 @@ def run_browser_login(
 
         try:
             page.goto(auth_url, wait_until="domcontentloaded", timeout=60_000)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 — surfaced to the user below
             consider(page.url)
             if not found:
                 raise SystemExit(f"Could not open the PC id sign-in page: {exc}") from exc
@@ -594,6 +639,9 @@ def main(argv: list[str] | None = None) -> int:
     profile_dir = workspace / ".browser-profile" / "pcid"
     vendor = vendor_dir(workspace)
 
+    # Load the workspace .env into the environment (without overriding the
+    # shell) *before* importing pcid_config, which reads PCEXPRESS_CLIENT_SECRET
+    # at import time.
     env_values = load_env_file(env_path, environ={}, override=False)
     for key, value in env_values.items():
         os.environ.setdefault(key, value)
@@ -623,6 +671,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
+    # Store id: derive from the account when .env lacks a real one.
     current_store = os.environ.get(STORE_KEY) or env_values.get(STORE_KEY)
     banner = os.environ.get(BANNER_KEY) or env_values.get(BANNER_KEY)
     want_store = args.force_store or is_placeholder(current_store) or args.dump_profile

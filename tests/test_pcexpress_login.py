@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import io
+import json
+import os
 import sys
 import tempfile
 import unittest
@@ -13,6 +15,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from pcexpress import gitignore_covers  # noqa: E402
 from pcexpress_login import (  # noqa: E402
     AuthorizeError,
     code_from_url,
@@ -52,6 +55,25 @@ class CodeFromUrlTests(unittest.TestCase):
         )
         self.assertEqual(code_from_url(url), ("wrapped", "s1"))
 
+    def test_double_encoded_wrapper(self) -> None:
+        # PCID sometimes percent-encodes the already-encoded app redirect.
+        inner = "com.loblaw.pcx://callback?code=twice&state=s2"
+        once = urllib.parse.quote(inner, safe="")
+        twice = urllib.parse.quote(once, safe="")
+        url = "https://login.example/success?redirectURL=" + twice
+        self.assertEqual(code_from_url(url), ("twice", "s2"))
+
+    def test_fully_encoded_url(self) -> None:
+        # The whole redirect forwarded as one percent-encoded blob (no `?`).
+        raw = "com.loblaw.pcx://callback?code=blob&state=s3"
+        self.assertEqual(
+            code_from_url(urllib.parse.quote(raw, safe="")), ("blob", "s3")
+        )
+
+    def test_no_code_returns_none(self) -> None:
+        self.assertIsNone(code_from_url("https://accounts.example/login?foo=bar"))
+        self.assertIsNone(code_from_url(""))
+
     def test_oauth_error_raises(self) -> None:
         with self.assertRaises(AuthorizeError):
             code_from_url("com.loblaw.pcx://cb?error=access_denied&error_description=nope")
@@ -75,61 +97,119 @@ class StoreDiscoveryTests(unittest.TestCase):
         self.assertNotIn("secret", str(sk))
 
 
-class MainDiscoveryTests(unittest.TestCase):
-    def _minimal_workspace(self, root: Path) -> Path:
-        root.mkdir(parents=True, exist_ok=True)
-        (root / "workspace.yaml").write_text("version: 2\n", encoding="utf-8")
-        (root / "recipes").mkdir()
-        return root
+TOKENS = {"refresh_token": "rtok", "access_token": "atok", "expires_in": 3600}
 
-    def test_main_uses_find_workspace_root_not_toolkit_parent(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            ws = self._minimal_workspace(Path(raw) / "my-household")
-            fake_manual = mock.Mock()
-            fake_manual.build_authorize_url.return_value = "https://auth.example/"
-            fake_manual.exchange_code.return_value = {
-                "refresh_token": "rtok",
-                "expires_in": 3600,
-            }
-            fake_cfg = mock.Mock(CLIENT_SECRET="secret")
-            with mock.patch("pcexpress_login.find_workspace_root", return_value=ws) as find:
-                with mock.patch(
-                    "pcexpress_login.load_vendor_modules",
-                    return_value=(fake_manual, fake_cfg),
-                ):
-                    with mock.patch(
-                        "pcexpress_login.run_browser_login", return_value="code1"
-                    ):
-                        with mock.patch.dict("os.environ", {}, clear=False):
-                            rc = main(["--no-write"])
-            find.assert_called_once()
-            self.assertEqual(rc, 0)
+
+class MainTests(unittest.TestCase):
+    """Drive main() end to end with the browser, vendor modules, and network mocked.
+
+    Every test points the locator at a temp workspace via WORKSPACE_ROOT (the
+    override find_workspace_root honours) rather than mocking the locator, so
+    the script is exercised the way a user runs it. PCEXPRESS_* variables from
+    the developer's shell are stripped so they cannot leak into assertions.
+    """
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.ws = Path(self._tmp.name) / "my-household"
+        self.ws.mkdir()
+        (self.ws / "workspace.yaml").write_text("version: 2\n", encoding="utf-8")
+        (self.ws / "recipes").mkdir()
+
+        self.manual = mock.Mock()
+        self.manual.build_authorize_url.return_value = "https://auth.example/"
+        self.manual.exchange_code.return_value = dict(TOKENS)
+        self.cfg = mock.Mock(CLIENT_SECRET="secret")
+        self.load_vendor = mock.Mock(return_value=(self.manual, self.cfg))
+
+        clean_env = {
+            k: v for k, v in os.environ.items() if not k.startswith("PCEXPRESS_")
+        }
+        clean_env["WORKSPACE_ROOT"] = str(self.ws)
+        for patch in (
+            mock.patch.dict("os.environ", clean_env, clear=True),
+            mock.patch("pcexpress_login.load_vendor_modules", self.load_vendor),
+            mock.patch("pcexpress_login.run_browser_login", return_value="code1"),
+        ):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def _run(self, argv: list[str]) -> tuple[int, str]:
+        buf = io.StringIO()
+        with mock.patch("sys.stdout", buf):
+            rc = main(argv)
+        return rc, buf.getvalue()
+
+    def _tree_is_clean(self, root: Path) -> None:
+        for name in (".env", ".env.tmp", ".pcexpress-mcp", ".browser-profile"):
+            self.assertFalse((root / name).exists(), f"{name} created under {root}")
+
+    def test_main_resolves_workspace_with_locator_not_script_location(self) -> None:
+        rc, _ = self._run(["--no-write"])
+        self.assertEqual(rc, 0)
+        # The vendored server is looked up under the *workspace* the locator
+        # returned, not under the toolkit (the old script used parents[1]).
+        (vendor,), _ = self.load_vendor.call_args
+        self.assertEqual(vendor, self.ws / "vendor" / "pcexpress-mcp-server")
+        self.assertNotIn(ROOT, vendor.parents)
 
     def test_no_write_does_not_create_env_or_state(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            ws = self._minimal_workspace(Path(raw))
-            fake_manual = mock.Mock()
-            fake_manual.build_authorize_url.return_value = "https://auth.example/"
-            fake_manual.exchange_code.return_value = {
-                "refresh_token": "rtok",
-                "expires_in": 3600,
-            }
-            fake_cfg = mock.Mock(CLIENT_SECRET="secret")
-            with mock.patch("pcexpress_login.find_workspace_root", return_value=ws):
-                with mock.patch(
-                    "pcexpress_login.load_vendor_modules",
-                    return_value=(fake_manual, fake_cfg),
-                ):
-                    with mock.patch(
-                        "pcexpress_login.run_browser_login", return_value="code1"
-                    ):
-                        buf = io.StringIO()
-                        with mock.patch("sys.stdout", buf):
-                            rc = main(["--no-write"])
-            self.assertEqual(rc, 0)
-            self.assertFalse((ws / ".env").exists())
-            self.assertFalse((ws / ".pcexpress-mcp").exists())
-            self.assertIn("PCEXPRESS_REFRESH_TOKEN=rtok", buf.getvalue())
+        rc, out = self._run(["--no-write"])
+        self.assertEqual(rc, 0)
+        self._tree_is_clean(self.ws)
+        self._tree_is_clean(ROOT)
+        self.assertIn("PCEXPRESS_REFRESH_TOKEN=rtok", out)
+
+    def test_write_targets_workspace_only(self) -> None:
+        (self.ws / ".env").write_text(
+            "# household\nPCEXPRESS_BANNER=superstore\n"
+            "PCEXPRESS_STORE_ID=your_store_id_here\n",
+            encoding="utf-8",
+        )
+        (self.ws / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+
+        with mock.patch("pcexpress_login.discover_store_id", return_value="0545"):
+            rc, out = self._run([])
+        self.assertEqual(rc, 0)
+
+        env_text = (self.ws / ".env").read_text(encoding="utf-8")
+        self.assertIn("# household\n", env_text)
+        self.assertIn("PCEXPRESS_BANNER=superstore\n", env_text)
+        self.assertIn("PCEXPRESS_REFRESH_TOKEN=rtok\n", env_text)
+        self.assertIn("PCEXPRESS_STORE_ID=0545\n", env_text)
+        self.assertNotIn("your_store_id_here", env_text)
+        self.assertNotIn("rtok", out, "refresh token must not be printed")
+
+        state = json.loads(
+            (self.ws / ".pcexpress-mcp" / "pcid_token_state.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(state["refresh_token"], "rtok")
+        self.assertEqual(state["access_token"], "atok")
+
+        ignore = (self.ws / ".gitignore").read_text(encoding="utf-8")
+        self.assertIn("*.pyc\n", ignore)
+        for pattern in (".env", ".pcexpress-mcp/", ".browser-profile/"):
+            self.assertTrue(gitignore_covers(ignore, pattern), pattern)
+
+        self._tree_is_clean(ROOT)
+
+    def test_write_keeps_real_store_id_unless_forced(self) -> None:
+        (self.ws / ".env").write_text(
+            "PCEXPRESS_BANNER=superstore\nPCEXPRESS_STORE_ID=1001\n", encoding="utf-8"
+        )
+        with mock.patch("pcexpress_login.discover_store_id", return_value="0545") as disc:
+            rc, out = self._run([])
+        self.assertEqual(rc, 0)
+        disc.assert_not_called()
+        self.assertIn("PCEXPRESS_STORE_ID=1001\n", (self.ws / ".env").read_text("utf-8"))
+
+        with mock.patch("pcexpress_login.discover_store_id", return_value="0545"):
+            rc, out = self._run(["--force-store"])
+        self.assertEqual(rc, 0)
+        self.assertIn("PCEXPRESS_STORE_ID=0545\n", (self.ws / ".env").read_text("utf-8"))
 
     def test_missing_workspace_returns_one(self) -> None:
         with mock.patch(
